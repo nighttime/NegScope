@@ -17,6 +17,9 @@ class ParseTree:
 		def add_child(self, child):
 			self.children.append(child)
 
+		def is_leaf(self):
+			return self.leaf_ref is not None
+
 		def __str__(self):
 			if self.leaf_ref is not None:
 				return '*'
@@ -51,12 +54,49 @@ class ParseTree:
 
 		return np.max(shortest_paths)
 
+	def tree_tokens(self):
+		'''List all parse tree node and leaf tokens'''
+		return [self.words[c.leaf_ref] if c.is_leaf() else c.constituent for c in self.constituents]
+
+	def tree_node_tokens(self):
+		'''List all non-terminal node tokens'''
+		return [c.constituent for c in self.constituents if not c.is_leaf()]
+
+	def tree_leaf_tokens(self):
+		'''List all terminal node tokens'''
+		return [w.lower() for w in self.words]
+
+	def adjacency_matrix(self, self_loops=True, row_normalize=True):
+		'''Compute adjacency matrix of the parse tree (undirected graph). 
+		A connection is added between all graph neighbors and optionally, self-loops.
+		ex. (A (B C)) -> [[1, 1, 1],[1, 1, 0],[1, 0, 1]]
+		'''
+		cons = len(self.constituents)
+		A = np.zeros([cons, cons])
+		con2ind = {c:i for i,c in enumerate(self.constituents)}
+
+		for c in self.constituents:
+			if self_loops:
+				A[con2ind[c], con2ind[c]] = 1
+			for adj in c.children:
+				A[con2ind[c], con2ind[adj]] = 1
+				A[con2ind[adj], con2ind[c]] = 1
+
+		if row_normalize:
+			row_sum = A.sum(axis=1)
+			row_sum[row_sum==0] += 0.1 # prevent divide-by-0 errors for 0-sum rows
+			A /= row_sum.reshape([len(row_sum),1])
+
+		return A
+
+
+
 	@classmethod
 	def _find_const_shortest_path(cls, constituent, target):
 		''' Finds the length of the shortest path between a constituent and a target leaf node
 		returns length of path if the leaf is a descendent of the constituent, otherwise float('inf')
 		'''
-		if constituent.leaf_ref is not None:
+		if constituent.is_leaf():
 			return 0 if constituent.leaf_ref == target else float('inf')
 		else:
 			return 1 + min(ParseTree._find_const_shortest_path(c, target) for c in constituent.children)
@@ -121,7 +161,7 @@ class ParseTree:
 				i += 1
 
 			# skip whitespace, etc
-			elif c in ' ':
+			elif c in ' \n':
 				i += 1
 
 			# scan ahead to capture an alphabetic symbol
@@ -142,7 +182,7 @@ class ParseTree:
 
 			# otherwise, error
 			else:
-				raise Exception('Parse tokenization error: {} in {}'.format(c, syntax))
+				raise Exception('Parse tokenization error: `{}` (char {}) in {}'.format(c, i, syntax))
 
 		return tokens
 

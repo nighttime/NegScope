@@ -4,8 +4,6 @@ import pdb
 from ParseTree import *
 
 
-
-
 def read_starsem_scope_data(fname):
 	''' Read in training data, parse sentence syntax, and construct consituent trees'''
 
@@ -30,7 +28,7 @@ def read_starsem_scope_data(fname):
 			chapters[ch][sen_num][2] += l[6]
 			
 			# Read negation data
-			if l[7] != '***':
+			if len(l) > 7 and l[7] != '***':
 				n1 = ['' if x == '_' else x for x in l[7:10]]
 				chapters[ch][sen_num][3][0].append(n1)
 				if len(l) > 10:
