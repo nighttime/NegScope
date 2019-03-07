@@ -1,12 +1,14 @@
 import numpy as np
 import pdb
 
-class ParseTree:
+class ParsedSentence:
 	class ParseNode:
 		def __init__(self, constituent=None, leaf_ref=None):
 			self.constituent = constituent
 			self.leaf_ref = leaf_ref
 			self.children = []
+			self.negation_cue = False
+			self.negation_scope = False
 
 		def add_constituent(self, constituent):
 			self.constituent = constituent
@@ -21,29 +23,54 @@ class ParseTree:
 			return self.leaf_ref is not None
 
 		def __str__(self):
-			if self.leaf_ref is not None:
+			if self.is_leaf():
 				return '*'
 			else:
 			# val = self.constituent or (self.words[int(self.leaf_ref)] + '/' + self.pos[int(self.leaf_ref)])
 				return '(' + self.constituent + ''.join(str(c) for c in self.children) + ')'
 
-	def __init__(self, words, pos, syntax):
+		def pprint(self, words):
+			begin = ''
+			end = ''
+			if self.is_leaf():
+				if self.negation_cue:
+					begin = Color.BOLD + begin
+					end = end + Color.ENDC
+				elif self.negation_scope:
+					begin = Color.UNDERLINE + begin
+					end = end + Color.ENDC
+				return begin + words[self.leaf_ref] + end
+			else:
+				return ' '.join(c.pprint(words) for c in self.children)
+
+
+	def __init__(self, words, pos, syntax, negation=None):
 		self.words = words
 		self.pos = pos
-		self.syntax = ParseTree._identify_leaves(syntax)
-		self.root = ParseTree._parse(self.syntax)
+		self.syntax = ParsedSentence._identify_leaves(syntax)
+		self.negation = negation
+
+		self.root = ParsedSentence._parse(self.syntax)
 		self.constituents = []
-		ParseTree._collect_constituents(self.root, self.constituents)
+		ParsedSentence._collect_constituents(self.root, self.constituents)
+		if self.negation:
+			try:
+				ParsedSentence._annotate_negation(self.constituents, self.negation)
+			except:
+				pdb.set_trace()
 
 	def __str__(self):
 		return str(self.root)
+
+	def pprint(self):
+		print(self.root.pprint(self.words))
 
 	def longest_syntactic_path(self):
 		# Find shortest path from each constituent to each leaf node
 		const_shortest_paths = np.full([len(self.constituents), len(self.words)], 0.)
 		for i in range(len(self.constituents)):
 			for j in range(len(self.words)):
-				const_shortest_paths[i,j] = ParseTree._find_const_shortest_path(self.constituents[i], j)
+				const_shortest_paths[i,j] = ParsedSentence._find_const_shortest_path(self.constituents[i], j)
 		
 		# Find shortest path from each leaf node to each other leaf node
 		shortest_paths = np.full([len(self.words), len(self.words)], -1)
@@ -70,6 +97,11 @@ class ParseTree:
 		'''Compute adjacency matrix of the parse tree (undirected graph). 
 		A connection is added between all graph neighbors and optionally, self-loops.
 		ex. (A (B C)) -> [[1, 1, 1],[1, 1, 0],[1, 0, 1]]
+
+		Returns:
+		the adjacency matrix A 
+		the key used to map entries of A to constituents
+		a 0/1 mask indicating which key constituents are leaves
 		'''
 		cons = len(self.constituents)
 		A = np.zeros([cons, cons])
@@ -87,8 +119,33 @@ class ParseTree:
 			row_sum[row_sum==0] += 0.1 # prevent divide-by-0 errors for 0-sum rows
 			A /= row_sum.reshape([len(row_sum),1])
 
-		return A
+		mask = [1 if c.is_leaf() else 0 for c in self.constituents]
 
+		return A, self.tree_tokens(), mask
+
+	def negation_cue(self, leaves_only=False):
+		if leaves_only:
+			return [1 if c.negation_cue else 0 for c in self.constituents if c.is_leaf()]
+		else:
+			return [1 if c.negation_cue else 0 for c in self.constituents]
+
+	def negation_scope(self, leaves_only=False):
+		if leaves_only:
+			return [1 if c.negation_scope else 0 for c in self.constituents if c.is_leaf()]
+		else:
+			return [1 if c.negation_scope else 0 for c in self.constituents]
+
+	@classmethod
+	def _annotate_negation(cls, constituents, negation):
+		cue = {i for i,x in enumerate(negation) if x[0] is not None}
+		scope = {i for i,x in enumerate(negation) if x[1] is not None}
+
+		for c in constituents:
+			if c.is_leaf():
+				if c.leaf_ref in cue:
+					c.negation_cue = True
+				if c.leaf_ref in scope:
+					c.negation_scope = True
 
 
 	@classmethod
@@ -99,7 +156,7 @@ class ParseTree:
 		if constituent.is_leaf():
 			return 0 if constituent.leaf_ref == target else float('inf')
 		else:
-			return 1 + min(ParseTree._find_const_shortest_path(c, target) for c in constituent.children)
+			return 1 + min(ParsedSentence._find_const_shortest_path(c, target) for c in constituent.children)
 
 
 
@@ -121,30 +178,30 @@ class ParseTree:
 
 	@classmethod
 	def _parse(cls, syntax):
-		tokens = ParseTree._tokenize(syntax)
+		tokens = ParsedSentence._tokenize(syntax)
 		if tokens[0] != '(':
 			raise Exception('Parse error: malformed syntax tree: {}'.format(syntax))
-		root = ParseTree.ParseNode()
-		ParseTree._parse_tree(root, tokens[1:])
+		root = ParsedSentence.ParseNode()
+		ParsedSentence._parse_tree(root, tokens[1:])
 		return root
 
 	@classmethod
 	def _parse_tree(cls, node, tokens):
 		t = tokens.pop(0)
 		if t == '(':
-			new_node = ParseTree.ParseNode()
-			ParseTree._parse_tree(new_node, tokens)
+			new_node = ParsedSentence.ParseNode()
+			ParsedSentence._parse_tree(new_node, tokens)
 			node.add_child(new_node)
-			ParseTree._parse_tree(node, tokens)
+			ParsedSentence._parse_tree(node, tokens)
 		elif t == ')':
 			return
 		elif t.isalpha():
 			node.add_constituent(t)
-			ParseTree._parse_tree(node, tokens)
+			ParsedSentence._parse_tree(node, tokens)
 		elif t.isnumeric():
-			new_node = ParseTree.ParseNode(leaf_ref=int(t))
+			new_node = ParsedSentence.ParseNode(leaf_ref=int(t))
 			node.add_child(new_node)
-			ParseTree._parse_tree(node, tokens)
+			ParsedSentence._parse_tree(node, tokens)
 		else:
 			raise Exception('Parse error: malformed syntax tree: {}')
 
@@ -190,8 +247,16 @@ class ParseTree:
 	def _collect_constituents(cls, node, constituents_list):
 		constituents_list.append(node)
 		for child in node.children:
-			ParseTree._collect_constituents(child, constituents_list)
+			ParsedSentence._collect_constituents(child, constituents_list)
 
 
-
+class Color:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
 

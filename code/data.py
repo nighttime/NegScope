@@ -1,7 +1,7 @@
 from collections import defaultdict
 import pdb
 
-from ParseTree import *
+from ParsedSentence import *
 
 
 def read_starsem_scope_data(fname):
@@ -18,7 +18,7 @@ def read_starsem_scope_data(fname):
 				continue
 
 			l = line.split('\t')
-			# [chapter, sen_num, tok_num, word, lemma, pos, syntax, [neg_trig, scope, event]* ]
+			# [chapter, sen_num, tok_num, word, lemma, pos, syntax, [neg_trig, scope, event]{0,2} ]
 
 			ch, sen_num = l[0], int(l[1])
 
@@ -28,25 +28,37 @@ def read_starsem_scope_data(fname):
 			chapters[ch][sen_num][2] += l[6]
 			
 			# Read negation data
-			if len(l) > 7 and l[7] != '***':
-				n1 = ['' if x == '_' else x for x in l[7:10]]
+			if not '***' in l[-1]:
+				n1 = [None if x == '_' else x for x in l[7:10]]
 				chapters[ch][sen_num][3][0].append(n1)
 				if len(l) > 10:
-					n2 = ['' if x == '_' else x for x in l[10:13]]
+					n2 = [None if x == '_' else x for x in l[10:13]]
 					chapters[ch][sen_num][3][1].append(n2)
-
+				
 
 	# Simplify chapter data
 
 	# {chapter_name: [sent_vals]}
 	chapter_sents = {name: [vals for _,vals in sorted(sents.items(), key=lambda x: x[0])] for name,sents in chapters.items()}
 
-	# Construct constituent trees from input data
+	# Construct constituent trees from input data, duplicating sentences if they have 2 negations
 
-	# {chapter_name: [ParseTree, [neg_scope1, neg_scope2]]}
-	chapter_trees = {name: [(ParseTree(*vals[:3]), vals[3]) for vals in sents] for name,sents in chapter_sents.items()}
-
-	# pdb.set_trace()
+	# {chapter_name: [ParsedSentence]}
+	chapter_trees = {}
+	for name,corpus in chapter_sents.items():
+		sents = []
+		for vals in corpus:
+			# 2 negations in this sentence
+			if vals[3][1]:
+				sents.append(ParsedSentence(*vals[:3], vals[3][0]))
+				sents.append(ParsedSentence(*vals[:3], vals[3][1]))
+			# 1 negation in this sentence
+			elif vals[3][0]:
+				sents.append(ParsedSentence(*vals[:3], vals[3][0]))
+			# 0 negations in this sentence
+			else:
+				sents.append(ParsedSentence(*vals[:3]))
+		chapter_trees[name] = sents
 
 	return chapter_trees
 			

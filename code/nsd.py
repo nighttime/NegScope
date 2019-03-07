@@ -5,8 +5,8 @@ import pdb
 DATA_FOLDER = '../starsem-st-2012-data/cd-sco/corpus/'
 TRAINING_FILE = 'training/SEM-2012-SharedTask-CD-SCO-training-09032012.txt'
 DEV_FILE = 'dev/SEM-2012-SharedTask-CD-SCO-dev-09032012.txt'
-TEST_FILE_A = 'test/SEM-2012-SharedTask-CD-SCO-test-cardboard.txt'
-TEST_FILE_B = 'test/SEM-2012-SharedTask-CD-SCO-test-circle.txt'
+TEST_FILE_A = 'test-gold/SEM-2012-SharedTask-CD-SCO-test-cardboard-GOLD.txt'
+TEST_FILE_B = 'test-gold/SEM-2012-SharedTask-CD-SCO-test-circle-GOLD.txt'
 
 EPOCHS = 10
 CONSTITUENT_FEATURES = 128
@@ -14,8 +14,8 @@ HIDDEN_UNITS = 64
 NUM_CLASSES = 2
 DROPOUT = 0.25
 
-def build_model():
-	model = GCN(3, CONSTITUENT_FEATURES, HIDDEN_UNITS, NUM_CLASSES, DROPOUT)
+def build_model(vocab):
+	model = GCN(3, CONSTITUENT_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab)
 	return model
 
 def train_model():
@@ -69,7 +69,7 @@ def get_data():
 		corpora.append(sents)
 
 	# Build vocabulary from training data
-	all_cons = [(s[0].tree_node_tokens(), s[0].tree_leaf_tokens()) for s in corpora[0]]
+	all_cons = [(s.tree_node_tokens(), s.tree_leaf_tokens()) for s in corpora[0]]
 	sen_cons, sen_words = tuple(zip(*all_cons))
 	cons_list, words_list = [x for s in sen_cons for x in s], [w.lower() for s in sen_words for w in s]
 	cons, words = set(cons_list), set(words_list)
@@ -78,7 +78,7 @@ def get_data():
 	# Format corpus data for the GCN
 	data_splits = []
 	for corpus in corpora:
-		d = [((s.adjacency_matrix(), s.tree_tokens()), n) for s,n in corpus]
+		d = [(s.adjacency_matrix(), s.negation_cue(), s.negation_scope(leaves_only=True)) for s in corpus]
 		data_splits.append(d)
 
 	pdb.set_trace()
@@ -92,7 +92,7 @@ def main():
 	pdb.set_trace()
 
 	# Build model
-	model = build_model()
+	model = build_model(vocab)
 
 	# Train model
 	train_model(model, train, dev)
