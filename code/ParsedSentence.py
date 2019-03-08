@@ -45,7 +45,7 @@ class ParsedSentence:
 
 
 	def __init__(self, words, pos, syntax, negation=None):
-		self.words = words
+		self.words = [w.lower() for w in words]
 		self.pos = pos
 		self.syntax = ParsedSentence._identify_leaves(syntax)
 		self.negation = negation
@@ -91,7 +91,7 @@ class ParsedSentence:
 
 	def tree_leaf_tokens(self):
 		'''List all terminal node tokens'''
-		return [w.lower() for w in self.words]
+		return self.words
 
 	def adjacency_matrix(self, self_loops=True, row_normalize=True):
 		'''Compute adjacency matrix of the parse tree (undirected graph). 
