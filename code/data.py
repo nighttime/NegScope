@@ -1,4 +1,7 @@
 from collections import defaultdict
+import numpy as np
+import torch
+from torch.nn.modules import *
 import pdb
 
 from ParsedSentence import *
@@ -61,4 +64,44 @@ def read_starsem_scope_data(fname):
 		chapter_trees[name] = sents
 
 	return chapter_trees
+
+
+def _format_dataset(dataset, maxlen):
+	# dataset = [(A, ts, mask, cue, scope)]
+	dlen = len(dataset)
+
+	A     = np.zeros((dlen, maxlen, maxlen))
+	ts    = np.zeros((dlen, maxlen), dtype=int)
+	mask  = np.zeros(dlen, dtype=object)
+	cue   = np.zeros((dlen, maxlen))
+	scope = np.zeros(dlen, dtype=object)
+
+	newset = (A, ts, mask, cue, scope)
+
+	for i,d in enumerate(dataset):
+		# pdb.set_trace()
+		A[i,0:d[0].shape[0],0:d[0].shape[1]] += d[0]
+		ts[i,0:len(d[1])]                    += np.array(d[1])
+		mask[i]                               = np.array([i for i,v in enumerate(d[2]) if v])
+		cue[i,0:len(d[3])]                   += np.array(d[3])
+		scope[i]                              = np.array(d[4])
+
+	return newset
+
+def format_data(train_unpacked, dev_unpacked, test_unpacked):
+	# data format : [(A, ts, mask, cue, scope)]
+	maxlen = max(max(len(x[1]) for x in d) for d in [train_unpacked, dev_unpacked, test_unpacked])
+	
+	train = _format_dataset(train_unpacked, maxlen)
+	dev = _format_dataset(dev_unpacked, maxlen)
+	test = _format_dataset(test_unpacked, maxlen)
+
+	return train, dev, test
 			
+
+
+
+
+
+
+

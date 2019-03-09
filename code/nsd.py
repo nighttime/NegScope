@@ -22,7 +22,8 @@ HIDDEN_UNITS = 64
 NUM_CLASSES = 2
 DROPOUT = 0.25
 
-UNK_TOK = 0
+UNK_TOK = 1
+PAD_TOK = 0
 
 def build_model(vocab):
 	model = GCN(3, CONSTITUENT_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab)
@@ -32,18 +33,30 @@ def train_model(model, train, dev):
 	model.train()
 	optimizer = optim.Adam(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
 	t = time.time()
+	
 	print('== BEGIN TRAINING ==')
 	for epoch in range(EPOCHS):
-		shuffle(train)
-		for sample in train:
-			optimizer.zero_grad()
+		print('-- Epoch:', epoch)
+		# shuffle(train)
+		A, ts, mask, cue, scope = train
+		index = np.random.permutation(train[0].shape[0])
+		for i in range(0,len(train),BATCH_SIZE):
+			batch_index_slice = slice(i,i+BATCH_SIZE)
+			batch_slice = index[batch_index_slice]
 
-			A, ts, mask, cue, scope = sample
+			batch_A = A[batch_slice]
+			batch_ts = ts[batch_slice]
+			batch_mask = mask[batch_slice]
+			batch_cue = cue[batch_slice]
+			batch_scope = scope[batch_slice]
 
-			output = model(ts, cue, A)
 			# pdb.set_trace()
-			inds = [i for i,v in enumerate(mask) if v]
-			loss = F.nll_loss(output[inds], torch.tensor(scope))
+			
+			# TODO get indices from each component
+
+			optimizer.zero_grad()
+			output = model(batch_ts, batch_cue, batch_A)
+			loss = F.nll_loss(output[batch_mask], batch_scope)
 			# acc_train = accuracy(output[idx_train], labels[idx_train])
 			loss.backward()
 			optimizer.step()
@@ -54,7 +67,7 @@ def train_model(model, train, dev):
 				# model.eval()
 				# output = model(features, adj)
 
-			loss_val = F.nll_loss(output[inds], torch.tensor(scope))
+			loss_val = F.nll_loss(output[batch_mask], batch_scope)
 			# acc_val = accuracy(output[idx_val], labels[idx_val])
 			print('Epoch: {:04d}'.format(epoch+1),
 				  'loss_train: {:.4f}'.format(loss.item()),
@@ -91,8 +104,8 @@ def get_data():
 	cons, words = set(cons_list), set(words_list)
 	vocab = cons | words
 
-	word2ind = {w:i+1 for i,w in enumerate(vocab)}
-	word2ind.update({'UNK':UNK_TOK})
+	word2ind = {w:i+2 for i,w in enumerate(vocab)}
+	word2ind.update({'UNK':UNK_TOK, 'PAD':PAD_TOK})
 
 	# Format corpus data for the GCN
 	data_splits = []
@@ -107,10 +120,12 @@ def main():
 	# Retrieve data
 	(train, dev, test), word2ind = get_data()
 
+	train, dev, test = format_data(train, dev, test)
+
 	# pdb.set_trace()
 
 	# Build model
-	model = build_model(word2ind)
+	model = build_model(len(word2ind))
 
 	# Train model
 	train_model(model, train, dev)

@@ -6,12 +6,12 @@ import pdb
 
 
 class GCN(nn.Module):
-    def __init__(self, num_layers, input_features, hidden_units, classes, vocab):
+    def __init__(self, num_layers, input_features, hidden_units, classes, vocab_size):
         assert num_layers >= 2
 
         super(GCN, self).__init__()
 
-        self.embedding = nn.Embedding(len(vocab), input_features-1)
+        self.embedding = nn.Embedding(vocab_size, input_features-1)
 
         self.num_layers = num_layers
         self.layers = \
