@@ -1,5 +1,6 @@
 import numpy as np
 import pdb
+from utils import *
 
 class ParsedSentence:
 	class ParseNode:
@@ -119,21 +120,17 @@ class ParsedSentence:
 			row_sum[row_sum==0] += 0.1 # prevent divide-by-0 errors for 0-sum rows
 			A /= row_sum.reshape([len(row_sum),1])
 
-		mask = [1 if c.is_leaf() else 0 for c in self.constituents]
+		surface_mask = [1 if c.is_leaf() else 0 for c in self.constituents]
 
-		return A, self.tree_tokens(), mask
+		return A, self.tree_tokens(), surface_mask
 
-	def negation_cue(self, leaves_only=False):
-		if leaves_only:
-			return [1 if c.negation_cue else 0 for c in self.constituents if c.is_leaf()]
-		else:
-			return [1 if c.negation_cue else 0 for c in self.constituents]
+	def negation_cue(self):
+		'''Returns a {0,1} mask over all tree tokens -- 1=cue, 0=otherwise'''
+		return [1 if c.negation_cue else 0 for c in self.constituents]
 
-	def negation_scope(self, leaves_only=False):
-		if leaves_only:
-			return [1 if c.negation_scope else 0 for c in self.constituents if c.is_leaf()]
-		else:
-			return [1 if c.negation_scope else 0 for c in self.constituents]
+	def negation_surface_scope(self):
+		'''Returns a {0,1} mask over JUST tree leaves (words) -- 1=in-scope, 0=otherwise'''
+		return [1 if c.negation_scope else 0 for c in self.constituents if c.is_leaf()]
 
 	@classmethod
 	def _annotate_negation(cls, constituents, negation):
@@ -249,14 +246,4 @@ class ParsedSentence:
 		for child in node.children:
 			ParsedSentence._collect_constituents(child, constituents_list)
 
-
-class Color:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
 

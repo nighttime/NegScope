@@ -1,5 +1,6 @@
 from data import *
 from nsdmodel import *
+from utils import *
 import pdb
 import time
 
@@ -7,73 +8,110 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 
-DATA_FOLDER = '../starsem-st-2012-data/cd-sco/corpus/'
-TRAINING_FILE = 'training/SEM-2012-SharedTask-CD-SCO-training-09032012.txt'
-DEV_FILE = 'dev/SEM-2012-SharedTask-CD-SCO-dev-09032012.txt'
-TEST_FILE_A = 'test-gold/SEM-2012-SharedTask-CD-SCO-test-cardboard-GOLD.txt'
-TEST_FILE_B = 'test-gold/SEM-2012-SharedTask-CD-SCO-test-circle-GOLD.txt'
-
-EPOCHS = 10
-LR = 0.01
-BATCH_SIZE = 15
-WEIGHT_DECAY = 5e-4
-CONSTITUENT_FEATURES = 128
-HIDDEN_UNITS = 64
+EMB_FEATURES = 32
+HIDDEN_UNITS = 32
+GCN_LAYERS = 20
 NUM_CLASSES = 2
+
+EPOCHS = 6
+LR = 0.05
+BATCH_SIZE = 100
+
+WEIGHT_DECAY = 5e-4
 DROPOUT = 0.25
 
-UNK_TOK = 1
-PAD_TOK = 0
 
 def build_model(vocab):
-	model = GCN(3, CONSTITUENT_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab)
+	model = GCN(GCN_LAYERS, EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab)
 	return model
 
-def train_model(model, train, dev):
-	model.train()
-	optimizer = optim.Adam(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
+def decode(inds, ind2word):
+	return [ind2word[i] for i in inds]
+
+def print_sent(tokens, word_index, cue, scope, ind2word):
+	s = '>> '
+	for i,t in enumerate(tokens):
+		begin = ''
+		end = ''
+		if i in word_index:
+			if cue[i]:
+				begin += Color.BOLD
+				end += Color.ENDC
+			if scope[word_index.tolist().index(i)]:
+				begin += Color.UNDERLINE
+				end += Color.ENDC
+			s += begin + ind2word[t] + end + ' '
+	print(s)
+
+def print_batch(tokens, word_index, cue, scope, ind2word):
+	for b in range(tokens.shape[0]):
+		print_sent(tokens[b], word_index[b], cue[b], scope[b], ind2word)
+
+
+def train_model(model, train, dev, ind2word):
+	optimizer = optim.Adam(model.parameters(), lr=LR)#, weight_decay=WEIGHT_DECAY)
+	A, ts, word_index, cue, scope = train
+	datalen = A.shape[0]
 	t = time.time()
 	
 	print('== BEGIN TRAINING ==')
 	for epoch in range(EPOCHS):
-		print('-- Epoch:', epoch)
-		# shuffle(train)
-		A, ts, mask, cue, scope = train
+		model.train()
+		
 		index = np.random.permutation(train[0].shape[0])
-		for i in range(0,len(train),BATCH_SIZE):
+		ep_loss, ep_acc = 0, 0
+
+		batch_inds = range(0, datalen, BATCH_SIZE)
+		for i in batch_inds:
 			batch_index_slice = slice(i,i+BATCH_SIZE)
 			batch_slice = index[batch_index_slice]
+			batch_len = batch_slice.shape[0]
 
-			batch_A = A[batch_slice]
-			batch_ts = ts[batch_slice]
-			batch_mask = mask[batch_slice]
-			batch_cue = cue[batch_slice]
-			batch_scope = scope[batch_slice]
-
-			# pdb.set_trace()
-			
-			# TODO get indices from each component
+			batch_A          = A[batch_slice]
+			batch_ts         = ts[batch_slice]
+			batch_word_index = word_index[batch_slice]
+			batch_cue        = cue[batch_slice]
+			batch_scope      = scope[batch_slice]
 
 			optimizer.zero_grad()
 			output = model(batch_ts, batch_cue, batch_A)
-			loss = F.nll_loss(output[batch_mask], batch_scope)
-			# acc_train = accuracy(output[idx_train], labels[idx_train])
+			# pdb.set_trace()
+
+			class_wt = torch.tensor([0.85, 0.15])
+			losses, accs = [], []
+			for j in range(batch_len):
+				actual = output[j,batch_word_index[j]]
+				expected = torch.tensor(batch_scope[j])
+				losses.append(F.nll_loss(actual, expected, weight=class_wt))
+				accs.append(accuracy(actual.max(1)[1], expected))
+
+			loss = sum(losses)/batch_len
+			acc = sum(accs)/batch_len
+			
+			if i % 500 == 0:
+				print(' - Samples ({}/{})'.format(i, datalen), \
+					'loss: {:0.4f}'.format(loss.item()), \
+					'acc: {:0.4f}'.format(acc))
+
+			ep_loss += loss.item()
+			ep_acc += acc
+			
+			# pdb.set_trace()
+
 			loss.backward()
 			optimizer.step()
 
-			# if not args.fastmode:
-				# Evaluate validation set performance separately,
-				# deactivates dropout during validation run.
-				# model.eval()
-				# output = model(features, adj)
+		ep_loss /= len(batch_inds)
+		ep_acc /= len(batch_inds)
+		print('| Epoch: {:04d}'.format(epoch), \
+			'loss_train: {:.4f}'.format(ep_loss), \
+			'acc_train: {:.4f}'.format(ep_acc), \
+			'time: {:.4f}s'.format(time.time() - t))
+		t = time.time()
 
-			loss_val = F.nll_loss(output[batch_mask], batch_scope)
-			# acc_val = accuracy(output[idx_val], labels[idx_val])
-			print('Epoch: {:04d}'.format(epoch+1),
-				  'loss_train: {:.4f}'.format(loss.item()),
-				  'loss_val: {:.4f}'.format(loss_val.item()),
-				  'time: {:.4f}s'.format(time.time() - t))
-
+def accuracy(actual, expected):
+	correct = actual.eq(expected).double().sum()
+	return correct / expected.shape[0]
 
 def test_model():
 	pass
@@ -86,39 +124,11 @@ def test_model():
 #		   "accuracy= {:.4f}".format(acc_test.item()))
 
 
-
-def get_data():
-
-	# Read in corpus data
-	corpora = []
-	for corpus_file in [TRAINING_FILE, DEV_FILE, TEST_FILE_A]:
-		print('reading in:', corpus_file)
-		chapters = read_starsem_scope_data(DATA_FOLDER + corpus_file)
-		sents = [sent for _,chap in chapters.items() for sent in chap]
-		corpora.append(sents)
-
-	# Build vocabulary from training data
-	all_cons = [(s.tree_node_tokens(), s.tree_leaf_tokens()) for s in corpora[0]]
-	sen_cons, sen_words = tuple(zip(*all_cons))
-	cons_list, words_list = [x for s in sen_cons for x in s], [w for s in sen_words for w in s]
-	cons, words = set(cons_list), set(words_list)
-	vocab = cons | words
-
-	word2ind = {w:i+2 for i,w in enumerate(vocab)}
-	word2ind.update({'UNK':UNK_TOK, 'PAD':PAD_TOK})
-
-	# Format corpus data for the GCN
-	data_splits = []
-	for corpus in corpora:
-		d = [(s.adjacency_matrix(), s.negation_cue(), s.negation_scope(leaves_only=True)) for s in corpus]
-		d = [(A, [word2ind.get(w, UNK_TOK) for w in ts], mask, cue, scope) for ((A, ts, mask), cue, scope) in d]
-		data_splits.append(d)
-
-	return data_splits, word2ind
-
 def main():
 	# Retrieve data
 	(train, dev, test), word2ind = get_data()
+
+	ind2word = {v:k for k,v in word2ind.items()}
 
 	train, dev, test = format_data(train, dev, test)
 
@@ -128,7 +138,9 @@ def main():
 	model = build_model(len(word2ind))
 
 	# Train model
-	train_model(model, train, dev)
+	train_model(model, train, dev, ind2word)
+
+	exit(0)
 
 	# Test model
 	test_model(model, test)

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pygcn.layers import GraphConvolution
+from layers import GraphConvolution
 import pdb
 
 
@@ -21,13 +21,13 @@ class GCN(nn.Module):
         # self.dropout = dropout
 
     def forward(self, x, cue, adj):
-        tx = torch.tensor(x)
-        ex = self.embedding(tx)
-        tc = torch.tensor(cue).float().unsqueeze(1)
+        emb = self.embedding(torch.tensor(x))
+        tc = torch.tensor(cue).float().unsqueeze(-1)
         A = torch.FloatTensor(adj)
+        x = torch.cat((emb, tc), -1)
 
-        x = torch.cat((ex, tc), 1)
         for layer in self.layers:
             x = F.relu(layer(x, A))
             # x = F.dropout(x, self.dropout, training=self.training)
+        # pdb.set_trace()
         return F.log_softmax(x, dim=1)

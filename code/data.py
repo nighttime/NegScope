@@ -6,6 +6,14 @@ import pdb
 
 from ParsedSentence import *
 
+DATA_FOLDER = '../starsem-st-2012-data/cd-sco/corpus/'
+TRAINING_FILE = 'training/SEM-2012-SharedTask-CD-SCO-training-09032012.txt'
+DEV_FILE = 'dev/SEM-2012-SharedTask-CD-SCO-dev-09032012.txt'
+TEST_FILE_A = 'test-gold/SEM-2012-SharedTask-CD-SCO-test-cardboard-GOLD.txt'
+TEST_FILE_B = 'test-gold/SEM-2012-SharedTask-CD-SCO-test-circle-GOLD.txt'
+
+UNK_TOK = 1
+PAD_TOK = 0
 
 def read_starsem_scope_data(fname):
 	''' Read in training data, parse sentence syntax, and construct consituent trees'''
@@ -70,19 +78,19 @@ def _format_dataset(dataset, maxlen):
 	# dataset = [(A, ts, mask, cue, scope)]
 	dlen = len(dataset)
 
-	A     = np.zeros((dlen, maxlen, maxlen))
-	ts    = np.zeros((dlen, maxlen), dtype=int)
-	mask  = np.zeros(dlen, dtype=object)
-	cue   = np.zeros((dlen, maxlen))
-	scope = np.zeros(dlen, dtype=object)
+	A            = np.zeros((dlen, maxlen, maxlen))
+	ts           = np.zeros((dlen, maxlen), dtype=int)
+	word_index   = np.zeros(dlen, dtype=object)
+	cue          = np.zeros((dlen, maxlen))
+	scope        = np.zeros(dlen, dtype=object)
 
-	newset = (A, ts, mask, cue, scope)
+	newset = (A, ts, word_index, cue, scope)
 
 	for i,d in enumerate(dataset):
 		# pdb.set_trace()
 		A[i,0:d[0].shape[0],0:d[0].shape[1]] += d[0]
 		ts[i,0:len(d[1])]                    += np.array(d[1])
-		mask[i]                               = np.array([i for i,v in enumerate(d[2]) if v])
+		word_index[i]                            = np.array([i for i,v in enumerate(d[2]) if v])
 		cue[i,0:len(d[3])]                   += np.array(d[3])
 		scope[i]                              = np.array(d[4])
 
@@ -98,7 +106,33 @@ def format_data(train_unpacked, dev_unpacked, test_unpacked):
 
 	return train, dev, test
 			
+def get_data():
+	# Read in corpus data
+	corpora = []
+	for corpus_file in [TRAINING_FILE, DEV_FILE, TEST_FILE_A]:
+		print('reading in:', corpus_file)
+		chapters = read_starsem_scope_data(DATA_FOLDER + corpus_file)
+		sents = [sent for _,chap in chapters.items() for sent in chap]
+		corpora.append(sents)
 
+	# Build vocabulary from training data
+	all_cons = [(s.tree_node_tokens(), s.tree_leaf_tokens()) for s in corpora[0]]
+	sen_cons, sen_words = tuple(zip(*all_cons))
+	cons_list, words_list = [x for s in sen_cons for x in s], [w for s in sen_words for w in s]
+	cons, words = set(cons_list), set(words_list)
+	vocab = cons | words
+
+	word2ind = {w:i+2 for i,w in enumerate(vocab)}
+	word2ind.update({'UNK':UNK_TOK, 'PAD':PAD_TOK})
+
+	# Format corpus data for the GCN
+	data_splits = []
+	for corpus in corpora:
+		d = [(s.adjacency_matrix(), s.negation_cue(), s.negation_surface_scope()) for s in corpus]
+		d = [(A, [word2ind.get(w, UNK_TOK) for w in ts], word_mask, cue, scope) for ((A, ts, word_mask), cue, scope) in d]
+		data_splits.append(d)
+
+	return data_splits, word2ind
 
 
 
