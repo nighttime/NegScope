@@ -14,10 +14,10 @@ class GCN(nn.Module):
         self.embedding = nn.Embedding(vocab_size, input_features-1)
 
         self.num_layers = num_layers
-        self.layers = \
+        self.layers = nn.ModuleList( \
             [GraphConvolution(input_features, hidden_units)] + \
             [GraphConvolution(hidden_units, hidden_units) for _ in range(num_layers-2)] + \
-            [GraphConvolution(hidden_units, classes)]
+            [GraphConvolution(hidden_units, classes)])
         # self.dropout = dropout
 
     def forward(self, x, cue, adj):
@@ -26,8 +26,10 @@ class GCN(nn.Module):
         A = torch.FloatTensor(adj)
         x = torch.cat((emb, tc), -1)
 
+        # pdb.set_trace()
+
         for layer in self.layers:
             x = F.relu(layer(x, A))
             # x = F.dropout(x, self.dropout, training=self.training)
         # pdb.set_trace()
-        return F.log_softmax(x, dim=1)
+        return F.softmax(x, dim=1)

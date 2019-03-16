@@ -55,10 +55,7 @@ class ParsedSentence:
 		self.constituents = []
 		ParsedSentence._collect_constituents(self.root, self.constituents)
 		if self.negation:
-			try:
-				ParsedSentence._annotate_negation(self.constituents, self.negation)
-			except:
-				pdb.set_trace()
+			ParsedSentence._annotate_negation(self.constituents, self.negation)
 
 	def __str__(self):
 		return str(self.root)

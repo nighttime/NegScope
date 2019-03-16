@@ -3,6 +3,7 @@ import pdb
 import torch
 from torch.nn.parameter import Parameter
 from torch.nn.modules.module import Module
+from utils import *
 
 
 class GraphConvolution(Module):
@@ -39,3 +40,30 @@ class GraphConvolution(Module):
         return self.__class__.__name__ + ' (' \
                + str(self.in_features) + ' -> ' \
                + str(self.out_features) + ')'
+
+
+class F1_Loss(Module):
+    
+    def __init__(self):
+        super(F1_Loss, self).__init__()
+        
+    def forward(self, actual, expected):
+        actual = actual.double()
+        expected = expected.double()
+
+        tp = torch.sum(expected * actual, dim=-1)
+        tn = torch.sum((1.0-expected) * (1.0-actual), dim=-1)
+        fp = torch.sum((1.0-expected) * actual, dim=-1)
+        fn = torch.sum(expected * (1 - actual), dim=-1)
+
+        precision = tp / (tp + fp + EPSILON)
+        recall    = tp / (tp + fn + EPSILON)
+
+        F1 = 2 * precision * recall / (precision + recall + EPSILON)
+        F1[torch.isnan(F1)] = 0.
+        # pdb.set_trace()
+        return 1 - F1.mean()
+
+
+
+

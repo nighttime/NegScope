@@ -106,13 +106,22 @@ def format_data(train_unpacked, dev_unpacked, test_unpacked):
 
 	return train, dev, test
 			
-def get_data():
+def get_data(only_negations=False):
 	# Read in corpus data
 	corpora = []
-	for corpus_file in [TRAINING_FILE, DEV_FILE, TEST_FILE_A]:
-		print('reading in:', corpus_file)
-		chapters = read_starsem_scope_data(DATA_FOLDER + corpus_file)
+	for corpus_file in [TRAINING_FILE, DEV_FILE, [TEST_FILE_A, TEST_FILE_B]]:
+		chapters = {}
+		if isinstance(corpus_file, list):
+			for c in corpus_file:
+				print('reading in:', c)
+				chapters.update(read_starsem_scope_data(DATA_FOLDER + c))
+		else:
+			print('reading in:', corpus_file)
+			chapters.update(read_starsem_scope_data(DATA_FOLDER + corpus_file))
+		
 		sents = [sent for _,chap in chapters.items() for sent in chap]
+		if only_negations:
+			sents = [s for s in sents if s.negation]
 		corpora.append(sents)
 
 	# Build vocabulary from training data
