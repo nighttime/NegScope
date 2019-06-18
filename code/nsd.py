@@ -3,6 +3,7 @@ from nsdmodel import *
 from utils import *
 import pdb
 import time
+import argparse
 # import torchviz
 
 import torch
@@ -12,19 +13,19 @@ from layers import F1_Loss
 
 EMB_FEATURES = 128
 HIDDEN_UNITS = 100
-GCN_LAYERS = 10
+GCN_LAYERS = 15
 NUM_CLASSES = 2
 
-EPOCHS = 5
+EPOCHS = 12
 LR = 0.01
-BATCH_SIZE = 25
+BATCH_SIZE = 50
 
 WEIGHT_DECAY = 5e-4
 DROPOUT = 0.25
 
 
 def build_model(vocab):
-	model = GCN(GCN_LAYERS, EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab)
+	model = GCN(GCN_LAYERS, EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab, directional=True)
 	return model
 
 def decode(inds, ind2word):
@@ -54,13 +55,96 @@ def print_batch(tokens, word_index, ind2word, cue=None, scope=None, cap=BATCH_SI
 			print_sent(tokens[b], word_index[b], ind2word, cue[b] if cue is not None else None, scope[b] if scope is not None else None)
 
 
+# def eval_batch(model, batch)
+
+# def train_model(model, train, dev, ind2word):
+# 	optimizer = optim.Adam(model.parameters(), lr=LR)#, weight_decay=WEIGHT_DECAY)
+# 	A, ts, word_index, cue, scope = train
+# 	datalen = A.shape[0]
+# 	# class_wt = torch.tensor([0.1, 10.0]) # negated sentences to non-neg
+# 	class_wt = torch.tensor([0.681,0.319]) # negated tokens to non-neg (given sentence has cue)
+# 	f1_loss = F1_Loss()
+
+# 	print('== BEGIN TRAINING ==')
+# 	for epoch in range(EPOCHS):
+# 		print('* Epoch: {:02d} -------------'.format(epoch))
+# 		model.train()
+		
+# 		index = np.random.permutation(train[0].shape[0])
+# 		ep_loss, ep_acc, ep_f1 = 0, 0, 0
+
+# 		batch_inds = range(0, datalen, BATCH_SIZE)
+# 		for i in batch_inds:
+# 			batch_index_slice = slice(i,i+BATCH_SIZE)
+# 			batch_slice = index[batch_index_slice]
+# 			batch_len = batch_slice.shape[0]
+
+# 			batch_A          = A[batch_slice]
+# 			batch_ts         = ts[batch_slice]
+# 			batch_word_index = word_index[batch_slice]
+# 			batch_cue        = cue[batch_slice]
+# 			batch_scope      = scope[batch_slice]
+
+# 			optimizer.zero_grad()
+# 			batch_output = model(batch_ts, batch_cue, batch_A)
+# 			batch_actual = predict(batch_output)
+
+# 			losses, accs, f1s = [], [], []
+# 			for j in range(batch_len):
+# 				class_output = batch_output[j,batch_word_index[j]]
+# 				actual = batch_actual[j,batch_word_index[j]]
+# 				expected = torch.tensor(batch_scope[j])
+# 				logged_out = torch.log(class_output)
+# 				losses.append(F.nll_loss(logged_out, expected, weight=class_wt))
+# 				# losses.append(f1_loss(class_output[:,1], expected))
+# 				accs.append(accuracy(actual, expected))
+# 				f1s.append(f1_score(actual, expected))
+
+# 			loss = sum(losses)/batch_len
+# 			acc = sum(accs)/batch_len
+# 			f1 = sum(f1s)/batch_len
+
+# 			print_actual = lambda c=BATCH_SIZE: print_batch(batch_ts, batch_word_index, ind2word, cue=batch_cue, scope=batch_actual, cap=c)
+# 			print_expected = lambda c=BATCH_SIZE: print_batch(batch_ts, batch_word_index, ind2word, cue=batch_cue, scope=batch_scope, cap=c)
+
+# 			# if (i % 200 == 0 and epoch == 0) or i % 2000 == 0:
+# 			if i % 150 == 0:
+# 				print(' - Samples ({}/{})'.format(i, datalen), \
+# 					'loss: {:0.4f}'.format(loss.item()), \
+# 					'acc: {:0.4f}'.format(acc), \
+# 					'f1: {:0.4f}'.format(f1))
+
+# 				# if epoch == 2:
+# 				# 	pdb.set_trace()
+
+# 			ep_loss += loss.item()
+# 			ep_acc += acc
+# 			ep_f1 += f1
+			
+# 			# pdb.set_trace()
+
+# 			loss.backward()
+# 			optimizer.step()
+
+# 		ep_loss /= len(batch_inds)
+# 		ep_acc /= len(batch_inds)
+# 		ep_f1 /= len(batch_inds)
+# 		print(' :', \
+# 			'loss_train: {:.4f} '.format(ep_loss), \
+# 			'acc_train: {:.4f} '.format(ep_acc), \
+# 			'f1_train: {:.4f} '.format(ep_f1))
+
+# 		dev_loss, dev_acc, dev_f1 = eval_batch()
+# 	print('FINISHED TRAINING')
+# 	pdb.set_trace()
+
 def train_model(model, train, dev, ind2word):
 	optimizer = optim.Adam(model.parameters(), lr=LR)#, weight_decay=WEIGHT_DECAY)
 	A, ts, word_index, cue, scope = train
 	datalen = A.shape[0]
-	class_wt = torch.tensor([0.1, 10.0])
+	# class_wt = torch.tensor([0.1, 10.0]) # negated sentences to non-neg
+	class_wt = torch.tensor([0.681,0.319]) # negated tokens to non-neg (given sentence has cue)
 	f1_loss = F1_Loss()
-	t = time.time()
 
 	print('== BEGIN TRAINING ==')
 	for epoch in range(EPOCHS):
@@ -92,7 +176,7 @@ def train_model(model, train, dev, ind2word):
 				actual = batch_actual[j,batch_word_index[j]]
 				expected = torch.tensor(batch_scope[j])
 				logged_out = torch.log(class_output)
-				losses.append(F.nll_loss(logged_out, expected))#, weight=class_wt))
+				losses.append(F.nll_loss(logged_out, expected, weight=class_wt))
 				# losses.append(f1_loss(class_output[:,1], expected))
 				accs.append(accuracy(actual, expected))
 				f1s.append(f1_score(actual, expected))
@@ -120,10 +204,7 @@ def train_model(model, train, dev, ind2word):
 			
 			# pdb.set_trace()
 
-			# torchviz.make_dot(loss)
-
 			loss.backward()
-			# pdb.set_trace()
 			optimizer.step()
 
 		ep_loss /= len(batch_inds)
@@ -133,8 +214,7 @@ def train_model(model, train, dev, ind2word):
 			'loss_train: {:.4f} '.format(ep_loss), \
 			'acc_train: {:.4f} '.format(ep_acc), \
 			'f1_train: {:.4f} '.format(ep_f1))
-			# 'time: {:.4f}s'.format(time.time() - t))
-		t = time.time()
+
 	print('FINISHED TRAINING')
 	pdb.set_trace()
 
@@ -173,12 +253,30 @@ def test_model():
 
 
 def main():
-	# Retrieve data
-	(train, dev, test), word2ind = get_data(only_negations=True)
+	# parser = argparse.ArgumentParser()
+	# parser.add_argument('--syntax', type=str)
+	# args = parser.parse_args()
 
+	# if args.syntax and args.syntax[-1] != '/':
+	# 	args.syntax += '/'
+
+	syntax = '../starsem-st-2012-data/cd-sco-CCG/corpus/'
+
+	# Retrieve data
+	corpora, word2ind = get_parse_data(only_negations=True, external_syntax_folder=syntax)
+	train, dev, test = format_data(corpora, word2ind)
 	ind2word = {v:k for k,v in word2ind.items()}
 
-	train, dev, test = format_data(train, dev, test)
+	pdb.set_trace()
+
+	#	A, ts, word_index, cue, scope = train
+	# all_toks = 0
+	# neg_toks = 0
+	# for i in range(train[1].shape[0]):
+	# 	all_toks += len(train[2][i])
+	# 	neg_toks += np.sum(train[4][i])
+
+	# print(neg_toks/float(all_toks),neg_toks,all_toks)
 
 	# pdb.set_trace()
 

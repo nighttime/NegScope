@@ -6,8 +6,8 @@ import pdb
 
 
 class GCN(nn.Module):
-    def __init__(self, num_layers, input_features, hidden_units, classes, vocab_size):
-        assert num_layers >= 2
+    def __init__(self, num_layers, input_features, hidden_units, classes, vocab_size, directional=False):
+        assert num_layers >= 1
 
         super(GCN, self).__init__()
 
@@ -15,10 +15,11 @@ class GCN(nn.Module):
 
         self.num_layers = num_layers
         self.layers = nn.ModuleList( \
-            [GraphConvolution(input_features, hidden_units)] + \
-            [GraphConvolution(hidden_units, hidden_units) for _ in range(num_layers-2)] + \
-            [GraphConvolution(hidden_units, classes)])
+            [GraphConvolution(input_features, hidden_units, directional=directional)] + \
+            [GraphConvolution(hidden_units, hidden_units, directional=directional) for _ in range(num_layers-1)])
         # self.dropout = dropout
+
+        self.classifier = nn.Linear(hidden_units, classes)
 
     def forward(self, x, cue, adj):
         emb = self.embedding(torch.tensor(x))
@@ -32,4 +33,6 @@ class GCN(nn.Module):
             x = F.relu(layer(x, A))
             # x = F.dropout(x, self.dropout, training=self.training)
         # pdb.set_trace()
-        return F.softmax(x, dim=1)
+
+        output = self.classifier(x)
+        return F.softmax(output, dim=-1)

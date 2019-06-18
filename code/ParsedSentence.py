@@ -1,6 +1,9 @@
 import numpy as np
+import re
 import pdb
 from utils import *
+
+SYMBOL_CHAR_REX = re.compile(r'[^\(\)\d\s]')
 
 class ParsedSentence:
 	class ParseNode:
@@ -44,18 +47,18 @@ class ParsedSentence:
 			else:
 				return ' '.join(c.pprint(words) for c in self.children)
 
-
 	def __init__(self, words, pos, syntax, negation=None):
 		self.words = [w.lower() for w in words]
 		self.pos = pos
 		self.syntax = ParsedSentence._identify_leaves(syntax)
 		self.negation = negation
-
+		
 		self.root = ParsedSentence._parse(self.syntax)
 		self.constituents = []
 		ParsedSentence._collect_constituents(self.root, self.constituents)
 		if self.negation:
 			ParsedSentence._annotate_negation(self.constituents, self.negation)
+		pdb.set_trace()
 
 	def __str__(self):
 		return str(self.root)
@@ -91,10 +94,14 @@ class ParsedSentence:
 		'''List all terminal node tokens'''
 		return self.words
 
-	def adjacency_matrix(self, self_loops=True, row_normalize=True):
+	def adjacency_matrix(self, directional=False, self_loops=True, row_normalize=True):
 		'''Compute adjacency matrix of the parse tree (undirected graph). 
 		A connection is added between all graph neighbors and optionally, self-loops.
 		ex. (A (B C)) -> [[1, 1, 1],[1, 1, 0],[1, 0, 1]]
+
+		If directional is True, A will be a 3 dimensional array, 
+			A[0,:,:] being the incoming connections (including self-loops) and 
+			A[1,:,:] the outgoing connections
 
 		Returns:
 		the adjacency matrix A 
@@ -102,22 +109,29 @@ class ParsedSentence:
 		a 0/1 mask indicating which key constituents are leaves
 		'''
 		cons = len(self.constituents)
-		A = np.zeros([cons, cons])
+		A = np.zeros([2, cons, cons])
+			
 		con2ind = {c:i for i,c in enumerate(self.constituents)}
 
 		for c in self.constituents:
 			if self_loops:
-				A[con2ind[c], con2ind[c]] = 1
+				A[0, con2ind[c], con2ind[c]] = 1
 			for adj in c.children:
-				A[con2ind[c], con2ind[adj]] = 1
-				A[con2ind[adj], con2ind[c]] = 1
+				A[0, con2ind[adj], con2ind[c]] = 1
+				if directional:
+					A[1, con2ind[c], con2ind[adj]] = 1
+				else:
+					A[0, con2ind[c], con2ind[adj]] = 1
 
 		if row_normalize:
-			row_sum = A.sum(axis=1)
+			row_sum = A.sum(axis=-1)
 			row_sum[row_sum==0] += 0.1 # prevent divide-by-0 errors for 0-sum rows
-			A /= row_sum.reshape([len(row_sum),1])
+			A /= np.expand_dims(row_sum, -1)
 
 		surface_mask = [1 if c.is_leaf() else 0 for c in self.constituents]
+
+		if not directional:
+			A = A[0]
 
 		return A, self.tree_tokens(), surface_mask
 
@@ -189,7 +203,7 @@ class ParsedSentence:
 			ParsedSentence._parse_tree(node, tokens)
 		elif t == ')':
 			return
-		elif t.isalpha():
+		elif all(SYMBOL_CHAR_REX.match(c) for c in t):
 			node.add_constituent(t)
 			ParsedSentence._parse_tree(node, tokens)
 		elif t.isnumeric():
@@ -215,10 +229,17 @@ class ParsedSentence:
 			elif c in ' \n':
 				i += 1
 
-			# scan ahead to capture an alphabetic symbol
-			elif c.isalpha():
+			# scan ahead to capture a constituent symbol
+			# elif c.isalpha():
+			# 	curr_tok = ''
+			# 	while syntax[i].isalpha():
+			# 		curr_tok += syntax[i]
+			# 		i += 1
+			# 	tokens.append(curr_tok)
+
+			elif SYMBOL_CHAR_REX.match(c):
 				curr_tok = ''
-				while syntax[i].isalpha():
+				while SYMBOL_CHAR_REX.match(syntax[i]):
 					curr_tok += syntax[i]
 					i += 1
 				tokens.append(curr_tok)
