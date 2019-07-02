@@ -46,6 +46,8 @@ class GraphConvolution(Module):
         else:
             support = torch.matmul(features, self.weight)
             output = torch.bmm(adj, support)
+
+        # pdb.set_trace()
         
         if self.bias is not None:
             return output + self.bias

@@ -58,7 +58,6 @@ class ParsedSentence:
 		ParsedSentence._collect_constituents(self.root, self.constituents)
 		if self.negation:
 			ParsedSentence._annotate_negation(self.constituents, self.negation)
-		pdb.set_trace()
 
 	def __str__(self):
 		return str(self.root)
@@ -84,7 +83,13 @@ class ParsedSentence:
 
 	def tree_tokens(self):
 		'''List all parse tree node and leaf tokens'''
+		
 		return [self.words[c.leaf_ref] if c.is_leaf() else c.constituent for c in self.constituents]
+		# words = []
+		# for c in self.constituents:
+		# 	if c.is_leaf():
+		# 		words.append(self.words[c.leaf_ref])
+		# return words
 
 	def tree_node_tokens(self):
 		'''List all non-terminal node tokens'''
@@ -130,8 +135,18 @@ class ParsedSentence:
 
 		surface_mask = [1 if c.is_leaf() else 0 for c in self.constituents]
 
+		# Set A to an undirected adjacency matrix
 		if not directional:
 			A = A[0]
+
+		# transpose the adjacency matrix for later batch multiplications
+		# if directional:
+		# 	A[0] = A[0].T
+		# 	A[1] = A[1].T
+		# else:
+		# 	A = A.T
+
+		# pdb.set_trace()
 
 		return A, self.tree_tokens(), surface_mask
 

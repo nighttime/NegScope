@@ -73,27 +73,21 @@ PAD_TOK = 0
 
 # 	return chapter_trees
 
-
-def read_starsem_scope_data(fname, external_syntax_fname=None):
-	''' Read in training data, parse sentence syntax, and construct consituent trees'''
-
-	# Read in annotation data from corpus
-	
+def _starsem_sentence_vals(fname):
 	# sents : [[sent, pos, syntax, [neg_scope1, neg_scope2]]]
 	sents = []
 	new_sent = True
 
 	with open(fname) as f:
 		for line in f:
-			if len(line) < 2:
+			if line == '\n':
 				new_sent = True
 				continue
 
 			if new_sent:
 				# sentence format : [words, pos, syntax, [neg_scope1, neg_scope2]]
 				sents.append([list(), list(), str(), [list(), list()]])
-
-			new_sent = False
+				new_sent = False
 
 			# l : [chapter, sent_num, tok_num, word, lemma, pos, syntax, [neg_trig, scope, event]{0,2} ]
 			l = line.split('\t')
@@ -112,7 +106,18 @@ def read_starsem_scope_data(fname, external_syntax_fname=None):
 				if len(l) > 10:
 					n2 = [None if x == '_' else x for x in l[10:13]]
 					sents[-1][3][1].append(n2)
-				
+
+		return sents
+
+def read_starsem_scope_data(fname, external_syntax_fname=None):
+	''' Read in training data, parse sentence syntax, and construct consituent trees'''
+
+	# Read in annotation data from corpus
+	sents = _starsem_sentence_vals(fname)
+
+	# Remove sentences that are longer than 70 words (cannot be parsed using Easy CCG)
+	sents = [x for x in sents if len(x[0]) <= 70]
+
 	# Construct constituent trees from input data, duplicating sentences if they have 2 negations
 
 	# sent_trees: [ParsedSentence]
@@ -122,9 +127,13 @@ def read_starsem_scope_data(fname, external_syntax_fname=None):
 	if external_syntax_fname:
 		external_syntax_trees = list(open(external_syntax_fname))
 
+	ext_p = 0
 	for i,vals in enumerate(sents):
-		syntax = external_syntax_trees[i] if external_syntax_fname else vals[2]
-		syntax = syntax.replace('\n', '')
+		syntax = external_syntax_trees[ext_p].replace('\n', '') if external_syntax_fname else vals[2]
+		
+		if syntax.count('*') != len(vals[0]):
+			print('No ccg parse. Skipping:',' '.join(vals[0]))
+			continue
 
 		if vals[3][1]:
 		# 2 negations in this sentence
@@ -137,12 +146,14 @@ def read_starsem_scope_data(fname, external_syntax_fname=None):
 		# 0 negations in this sentence
 			sent_trees.append(ParsedSentence(*vals[:2], syntax))
 
+		ext_p += 1
+
 	return sent_trees
 
 
 def _format_dataset(dataset, maxlen):
 	# input: a corpus : [(A, ts, mask, cue, scope)]
-	# output: reformatted for numpy : (A, ts, )
+	# output: reformatted as numpy arrays : (A, ts, mask, cue, scope)
 	dlen = len(dataset)
 	Ashape = dataset[0][0].shape
 
@@ -156,7 +167,7 @@ def _format_dataset(dataset, maxlen):
 
 	for i,d in enumerate(dataset):
 		ds = d[0].shape
-		
+		# pdb.set_trace()
 		if len(ds) == 3:
 			A[i,:,0:ds[1],0:ds[2]] += d[0]
 		else:
@@ -179,15 +190,18 @@ def _format_dataset(dataset, maxlen):
 
 # 	return train, dev, test
 
-def format_data(corpora, word2ind):
+def format_data(corpora, word2ind, directional=False):
 	# input: a corpora : [[ParseTree]]
 	# output: reformatted data of type : [(A, ts, mask, cue, scope)]
 	data_splits = []
 	for corpus in corpora:
 		d = []
 		for s in corpus:
-			A, ts, word_mask = s.adjacency_matrix(directional=True)
-			cue = [word2ind.get(w, UNK_TOK) for w in s.negation_cue()]
+			# A, ts, word_mask = s.adjacency_matrix(directional=True)
+			A, ts, word_mask = s.adjacency_matrix(directional=directional)
+			# cue = [word2ind.get(w, UNK_TOK) for w in s.negation_cue()]
+			ts = [word2ind.get(t, UNK_TOK) for t in ts]
+			cue = s.negation_cue()
 			scope = s.negation_surface_scope()
 			d.append((A, ts, word_mask, cue, scope))
 		data_splits.append(d)
@@ -195,26 +209,8 @@ def format_data(corpora, word2ind):
 	maxlen = max(max(len(s[1]) for s in d) for d in data_splits)
 	return [_format_dataset(d, maxlen) for d in data_splits]
 
-# def read_corpora(only_negations=False):
-# 	corpora = []
-# 	for corpus_file in [TRAINING_FILE, DEV_FILE, [TEST_FILE_A, TEST_FILE_B]]:
-# 		chapters = {}
-# 		if isinstance(corpus_file, list):
-# 			for c in corpus_file:
-# 				print('reading in:', c)
-# 				chapters.update(read_starsem_scope_data(DATA_FOLDER + c))
-# 		else:
-# 			print('reading in:', corpus_file)
-# 			chapters.update(read_starsem_scope_data(DATA_FOLDER + corpus_file))
-		
-# 		sents = [sent for _,chap in chapters.items() for sent in chap]
-# 		if only_negations:
-# 			sents = [s for s in sents if s.negation]
-# 		corpora.append(sents)
-# 	return corpora
-
-def read_corpora(only_negations=False, external_syntax_folder=None):
-	# output: list of corpora, each a list of ParseTree : [[ParseTree]]
+def read_corpora(only_words=False, only_negations=False, external_syntax_folder=None):
+	# output: list of corpora, each a list of ParseTree : [[ParseTree]] OR a list of words : [[str]]
 	corpora = []
 	for corpus_file in [TRAINING_FILE, DEV_FILE, [TEST_FILE_A, TEST_FILE_B]]:
 		corpus = []
@@ -222,14 +218,27 @@ def read_corpora(only_negations=False, external_syntax_folder=None):
 			for c in corpus_file:
 				print('reading in:', c)
 				ext_syntax = external_syntax_folder + c if external_syntax_folder else None
-				corpus.append(read_starsem_scope_data(DATA_FOLDER + c, external_syntax_fname=ext_syntax))
+				if only_words:
+					corpus += _starsem_sentence_vals(DATA_FOLDER + c)
+				else:
+					corpus += read_starsem_scope_data(DATA_FOLDER + c, external_syntax_fname=ext_syntax)
 		else:
 			print('reading in:', corpus_file)
 			ext_syntax = external_syntax_folder + corpus_file if external_syntax_folder else None
-			corpus = read_starsem_scope_data(DATA_FOLDER + corpus_file, external_syntax_fname=ext_syntax)
+			if only_words:
+				corpus = _starsem_sentence_vals(DATA_FOLDER + corpus_file)
+			else:
+				corpus = read_starsem_scope_data(DATA_FOLDER + corpus_file, external_syntax_fname=ext_syntax)
 		
 		if only_negations:
-			corpus = [s for s in corpus if s.negation]
+			if only_words:
+				# Keep sentence values if the negation component contains a scope
+				corpus = [vs for vs in corpus if v[-1][-1][0]]
+			else:
+				corpus = [s for s in corpus if s.negation]
+
+		if only_words:
+			corpus = [vs[0] for vs in corpus]
 
 		corpora.append(corpus)
 		
@@ -248,14 +257,9 @@ def make_word_index(corpus):
 	word2ind.update({'UNK':UNK_TOK, 'PAD':PAD_TOK})
 	return word2ind
 
-# def get_data(only_negations=False):
-# 	# Read in corpus data
-# 	corpora = read_corpora(only_negations=only_negations)
+def get_word_data():
+	return read_corpora(only_words=True)
 
-# 	# Build vocabulary from training data
-# 	word2ind = make_word_index(corpora[0])
-
-# 	return data_splits, word2ind
 
 def get_parse_data(only_negations=False, external_syntax_folder=None):
 	# Read in corpus data

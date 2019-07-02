@@ -28,7 +28,7 @@ def strip_ccg(fname):
 	lines = []
 	with open(fname) as file:
 		for line in file:
-			if 'ID=' in line:
+			if line.startswith('ID='):
 				continue
 			line = strip_ccg_parse(line).replace('\n', '')
 			lines.append(line)
@@ -43,12 +43,13 @@ def write_out(lines, fname):
 def main():
 	args = sys.argv
 	if args[1] == '--print-sents':
-		corpora, word2ind = get_parse_data()
+		corpora = get_word_data()
 		folder_name = 'corpus_words'
+		assert len(args[2:]) == len(corpora)
 		if not os.path.exists(folder_name):
 			os.makedirs(folder_name)
 		for i,fname in enumerate(args[2:]):
-			lines = [' '.join(sent.words) for sent in corpora[i]]
+			lines = [' '.join(words) for words in corpora[i]]
 			write_out(lines, folder_name + '/' + fname)
 
 	elif args[1] == '--strip-ccg':

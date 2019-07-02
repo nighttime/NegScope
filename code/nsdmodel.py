@@ -11,12 +11,17 @@ class GCN(nn.Module):
 
         super(GCN, self).__init__()
 
-        self.embedding = nn.Embedding(vocab_size, input_features-1)
-
         self.num_layers = num_layers
-        self.layers = nn.ModuleList( \
-            [GraphConvolution(input_features, hidden_units, directional=directional)] + \
-            [GraphConvolution(hidden_units, hidden_units, directional=directional) for _ in range(num_layers-1)])
+
+        self.embedding = nn.Embedding(vocab_size, input_features-1)
+        self.convert_to_hidden = nn.Linear(input_features, hidden_units)
+        self.graph_conv = GraphConvolution(hidden_units, hidden_units, directional=directional)
+        
+        # self.layers = nn.ModuleList( \
+        #     [GraphConvolution(input_features, hidden_units, directional=directional)] + \
+        #     [GraphConvolution(hidden_units, hidden_units, directional=directional) for _ in range(num_layers-1)])
+        # self.layer_conversion = GraphConvolution(input_features, hidden_units, directional=directional)
+        
         # self.dropout = dropout
 
         self.classifier = nn.Linear(hidden_units, classes)
@@ -29,10 +34,14 @@ class GCN(nn.Module):
 
         # pdb.set_trace()
 
-        for layer in self.layers:
-            x = F.relu(layer(x, A))
+        x = F.relu(self.convert_to_hidden(x))
+        for _ in range(self.num_layers):
+            x = F.relu(self.graph_conv(x, A))
+
+        # for layer in self.layers:
+        #     x = F.relu(layer(x, A))
             # x = F.dropout(x, self.dropout, training=self.training)
-        # pdb.set_trace()
 
         output = self.classifier(x)
+        # pdb.set_trace()
         return F.softmax(output, dim=-1)
