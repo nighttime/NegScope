@@ -26,14 +26,25 @@ class ParsedSentence:
 		def is_leaf(self):
 			return self.leaf_ref is not None
 
+		def _condense_tree(self):
+			# In the case of a single child, delete the child and promote the grandchildren
+			if self.is_leaf():
+				return
+			for i in range(len(self.children)):
+				while len(self.children[i].children) == 1:
+					self.children[i] = self.children[i].children[0]
+			# while len(self.children) == 1 and not self.children[0].is_leaf():
+			# 	self.children = self.children[0].children
+			for child in self.children:
+				child._condense_tree()
+
 		def __str__(self):
 			if self.is_leaf():
 				return '*'
 			else:
-			# val = self.constituent or (self.words[int(self.leaf_ref)] + '/' + self.pos[int(self.leaf_ref)])
 				return '(' + self.constituent + ''.join(str(c) for c in self.children) + ')'
 
-		def pprint(self, words):
+		def pprint_words(self, words):
 			begin = ''
 			end = ''
 			if self.is_leaf():
@@ -47,6 +58,18 @@ class ParsedSentence:
 			else:
 				return ' '.join(c.pprint(words) for c in self.children)
 
+		def pprint(self, indent=0):
+			if self.is_leaf():
+				return ' *'
+			else:
+				i = ' ' * 4 * indent
+				s = '\n' + i + '(' + self.constituent
+				for child in self.children:
+					s += child.pprint(indent+1)
+				s += ')'
+				return s
+
+
 	def __init__(self, words, pos, syntax, negation=None):
 		self.words = [w.lower() for w in words]
 		self.pos = pos
@@ -54,16 +77,18 @@ class ParsedSentence:
 		self.negation = negation
 		
 		self.root = ParsedSentence._parse(self.syntax)
-		self.constituents = []
-		ParsedSentence._collect_constituents(self.root, self.constituents)
+		self.reset_constituents()
 		if self.negation:
 			ParsedSentence._annotate_negation(self.constituents, self.negation)
 
 	def __str__(self):
 		return str(self.root)
 
+	def pprint_words(self):
+		print(self.root.pprint_words(self.words))
+
 	def pprint(self):
-		print(self.root.pprint(self.words))
+		print(self.root.pprint())
 
 	def longest_syntactic_path(self):
 		# Find shortest path from each constituent to each leaf node
@@ -81,15 +106,17 @@ class ParsedSentence:
 
 		return np.max(shortest_paths)
 
+	def reset_constituents(self):
+		self.constituents = []
+		ParsedSentence._collect_constituents(self.root, self.constituents)
+
+	def condense_single_branches(self):
+		self.root._condense_tree()
+		self.reset_constituents()
+
 	def tree_tokens(self):
 		'''List all parse tree node and leaf tokens'''
-		
 		return [self.words[c.leaf_ref] if c.is_leaf() else c.constituent for c in self.constituents]
-		# words = []
-		# for c in self.constituents:
-		# 	if c.is_leaf():
-		# 		words.append(self.words[c.leaf_ref])
-		# return words
 
 	def tree_node_tokens(self):
 		'''List all non-terminal node tokens'''
@@ -118,6 +145,8 @@ class ParsedSentence:
 			
 		con2ind = {c:i for i,c in enumerate(self.constituents)}
 
+		# A0 : child-to-parent connections
+		# A1 : parent-to-child connections
 		for c in self.constituents:
 			if self_loops:
 				A[0, con2ind[c], con2ind[c]] = 1
@@ -244,14 +273,7 @@ class ParsedSentence:
 			elif c in ' \n':
 				i += 1
 
-			# scan ahead to capture a constituent symbol
-			# elif c.isalpha():
-			# 	curr_tok = ''
-			# 	while syntax[i].isalpha():
-			# 		curr_tok += syntax[i]
-			# 		i += 1
-			# 	tokens.append(curr_tok)
-
+			# scan ahead to match a symbol
 			elif SYMBOL_CHAR_REX.match(c):
 				curr_tok = ''
 				while SYMBOL_CHAR_REX.match(syntax[i]):
@@ -278,5 +300,20 @@ class ParsedSentence:
 		constituents_list.append(node)
 		for child in node.children:
 			ParsedSentence._collect_constituents(child, constituents_list)
+
+
+def main():
+	words = 'he never returned .'.split()
+	syntax = '(S[dcl](NP*)(S[dcl]\\NP(S[dcl]\\NP(<S\\NP>/<S\\NP>*)(S[dcl]\\NP*))(.*)))'
+	pos = ['PRP', 'RB', 'VBD', '.']
+	neg = [[None, 'He', '_\n'], ['never', None, '_\n'], [None, 'returned', 'returned\n'], [None, None, '_\n']]
+	t = ParsedSentence(words, pos, syntax, negation=neg)
+	t.pprint()
+	pdb.set_trace()
+
+
+if __name__ == '__main__':
+	main()
+
 
 

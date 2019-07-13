@@ -1,5 +1,5 @@
 from data import *
-from nsdmodel import *
+from layers import *
 from utils import *
 import pdb
 import time
@@ -12,135 +12,113 @@ import torch.optim as optim
 from layers import F1_Loss
 
 EMB_FEATURES = 128
-HIDDEN_UNITS = 100
-GCN_LAYERS = 10
+POS_EMB_FEATURES = 16
+HIDDEN_UNITS = 200
+GCN_LAYERS = 12
 NUM_CLASSES = 2
 
-EPOCHS = 12
-LR = 0.005
-BATCH_SIZE = 50
+EPOCHS = 10
+LR = 0.01
+BATCH_SIZE = 25
 
 WEIGHT_DECAY = 5e-4
 DROPOUT = 0.25
 
 
-def build_model(vocab, directional=False):
-	model = GCN(GCN_LAYERS, EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab, directional=directional)
+def build_gcn_model(vocab_size, directional=False):
+	model = GCN(GCN_LAYERS, EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab_size, directional=directional)
+	return model
+
+def build_recurrent_model(vocab_size, pos_size):
+	model = RecurrentTagger(EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab_size, POS_EMB_FEATURES, pos_size)
+	return model
+
+def build_tree_recurrent_model(vocab_size):
+	model = TreeRecurrentTagger(HIDDEN_UNITS, NUM_CLASSES, vocab_size)
 	return model
 
 def decode(inds, ind2word):
-	return [ind2word[i] for i in inds]
+	return [ind2word[i] for i in inds if ind2word[i] != 0]
 
-def print_sent(tokens, word_index, ind2word, cue=None, scope=None):
+def print_sent(tokens, word_index, ind2word, cue=None, scope=None, pos=None):
 	if isinstance(scope, torch.Tensor):
 		scope = scope.data.numpy()
 
 	s = '>> '
+	word_ct = 0
 	for i,t in enumerate(tokens):
+		if t == 0:
+			break
 		begin = ''
 		end = ''
-		if i in word_index:
-			if cue is not None and cue[i]:
+		# pdb.set_trace()
+		if word_index is None or i in word_index:
+			if cue is not None and cue[i] == 1:
 				begin += Color.BOLD
 				end += Color.ENDC
-			if scope is not None and scope[word_index.tolist().index(i)]:
-				begin += Color.UNDERLINE
-				end += Color.ENDC
-			s += begin + ind2word[t] + end + ' '
+			if scope is not None:
+				if ((word_index is not None and scope[word_index.tolist().index(i)]) or 
+					(word_index is None and scope[i])):
+					begin += Color.UNDERLINE
+					end += Color.ENDC
+			p = ''
+			if pos is not None:
+				p = '|' + pos[1][pos[0][word_ct]]
+			s += begin + ind2word[t] + end + p + ' '
+			word_ct += 1
 	print(s)
 
-def print_batch(tokens, word_index, ind2word, cue=None, scope=None, cap=BATCH_SIZE):
+def print_batch(tokens, ind2word, word_index=None, cue=None, scope=None, pos=None, cap=BATCH_SIZE):
 	for b in range(tokens.shape[0]):
 		if b < cap:
-			print_sent(tokens[b], word_index[b], ind2word, cue[b] if cue is not None else None, scope[b] if scope is not None else None)
+			print_sent(tokens[b], 
+				word_index[b] if word_index is not None else None, 
+				ind2word, 
+				cue[b] if cue is not None else None, 
+				scope[b] if scope is not None else None, 
+				pos=((pos[0][b], pos[1]) if pos is not None else None)
+				)
 
+def assess_batch(model_output, y, word_index, loss_criterion):
+	assert model_output.shape[0] == y.shape[0]
+	batch_len = y.shape[0]
 
-# def eval_batch(model, batch)
+	yhat = predict(model_output)
+	losses, accs, f1s = [], [], []
 
-# def train_model(model, train, dev, ind2word):
-# 	optimizer = optim.Adam(model.parameters(), lr=LR)#, weight_decay=WEIGHT_DECAY)
-# 	A, ts, word_index, cue, scope = train
-# 	datalen = A.shape[0]
-# 	# class_wt = torch.tensor([0.1, 10.0]) # negated sentences to non-neg
-# 	class_wt = torch.tensor([0.681,0.319]) # negated tokens to non-neg (given sentence has cue)
-# 	f1_loss = F1_Loss()
-
-# 	print('== BEGIN TRAINING ==')
-# 	for epoch in range(EPOCHS):
-# 		print('* Epoch: {:02d} -------------'.format(epoch))
-# 		model.train()
+	for j in range(batch_len):
+		# FOR BiLSTM ######
+		# confidence_output = model_output[j,:seq_lens[j]]
+		# class_output = yhat[j,:seq_lens[j]]
+		# expected_output = torch.tensor(y[j])
+		# FOR GCN & TRNN####
+		confidence_output = model_output[j,word_index[j]]
+		class_output = yhat[j,word_index[j]]
+		expected_output = torch.tensor(y[j])
+		###################
 		
-# 		index = np.random.permutation(train[0].shape[0])
-# 		ep_loss, ep_acc, ep_f1 = 0, 0, 0
 
-# 		batch_inds = range(0, datalen, BATCH_SIZE)
-# 		for i in batch_inds:
-# 			batch_index_slice = slice(i,i+BATCH_SIZE)
-# 			batch_slice = index[batch_index_slice]
-# 			batch_len = batch_slice.shape[0]
+		# FOR Neg Log Likelihood
+		# logged_out = torch.log(confidence_output)
+		# losses.append(F.nll_loss(logged_out, expected_output))#, weight=class_wt))
 
-# 			batch_A          = A[batch_slice]
-# 			batch_ts         = ts[batch_slice]
-# 			batch_word_index = word_index[batch_slice]
-# 			batch_cue        = cue[batch_slice]
-# 			batch_scope      = scope[batch_slice]
+		# OR FOR F1 LOSS
+		losses.append(loss_criterion(confidence_output[:,1], expected_output))
 
-# 			optimizer.zero_grad()
-# 			batch_output = model(batch_ts, batch_cue, batch_A)
-# 			batch_actual = predict(batch_output)
+		accs.append(accuracy(class_output, expected_output))
+		f1s.append(f1_score(class_output, expected_output))
 
-# 			losses, accs, f1s = [], [], []
-# 			for j in range(batch_len):
-# 				class_output = batch_output[j,batch_word_index[j]]
-# 				actual = batch_actual[j,batch_word_index[j]]
-# 				expected = torch.tensor(batch_scope[j])
-# 				logged_out = torch.log(class_output)
-# 				losses.append(F.nll_loss(logged_out, expected, weight=class_wt))
-# 				# losses.append(f1_loss(class_output[:,1], expected))
-# 				accs.append(accuracy(actual, expected))
-# 				f1s.append(f1_score(actual, expected))
+	loss = sum(losses)/batch_len
+	acc = sum(accs)/batch_len
+	f1 = sum(f[0] for f in f1s)/batch_len
 
-# 			loss = sum(losses)/batch_len
-# 			acc = sum(accs)/batch_len
-# 			f1 = sum(f1s)/batch_len
+	return loss, acc, f1
 
-# 			print_actual = lambda c=BATCH_SIZE: print_batch(batch_ts, batch_word_index, ind2word, cue=batch_cue, scope=batch_actual, cap=c)
-# 			print_expected = lambda c=BATCH_SIZE: print_batch(batch_ts, batch_word_index, ind2word, cue=batch_cue, scope=batch_scope, cap=c)
 
-# 			# if (i % 200 == 0 and epoch == 0) or i % 2000 == 0:
-# 			if i % 150 == 0:
-# 				print(' - Samples ({}/{})'.format(i, datalen), \
-# 					'loss: {:0.4f}'.format(loss.item()), \
-# 					'acc: {:0.4f}'.format(acc), \
-# 					'f1: {:0.4f}'.format(f1))
 
-# 				# if epoch == 2:
-# 				# 	pdb.set_trace()
-
-# 			ep_loss += loss.item()
-# 			ep_acc += acc
-# 			ep_f1 += f1
-			
-# 			# pdb.set_trace()
-
-# 			loss.backward()
-# 			optimizer.step()
-
-# 		ep_loss /= len(batch_inds)
-# 		ep_acc /= len(batch_inds)
-# 		ep_f1 /= len(batch_inds)
-# 		print(' :', \
-# 			'loss_train: {:.4f} '.format(ep_loss), \
-# 			'acc_train: {:.4f} '.format(ep_acc), \
-# 			'f1_train: {:.4f} '.format(ep_f1))
-
-# 		dev_loss, dev_acc, dev_f1 = eval_batch()
-# 	print('FINISHED TRAINING')
-# 	pdb.set_trace()
-
-def train_model(model, train, dev, ind2word):
-	optimizer = optim.Adam(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
-	A, ts, word_index, cue, scope = train
+def run_model(model, train, dev, test, ind2word, ind2pos):
+	optimizer = optim.Adam(model.parameters(), lr=LR)#, weight_decay=WEIGHT_DECAY)
+	A, ts, pos, word_index, cue, scope = train
 	datalen = A.shape[0]
 	# class_wt = torch.tensor([0.1, 10.0]) # negated sentences to non-neg
 	class_wt = torch.tensor([0.681,0.319]) # negated tokens to non-neg (given sentence has cue)
@@ -148,10 +126,10 @@ def train_model(model, train, dev, ind2word):
 
 	print('== BEGIN TRAINING ==')
 	for epoch in range(EPOCHS):
-		print('* Epoch: {:02d} -------------'.format(epoch))
+		print(Color.BOLD + '* Epoch: {:02d} -------------'.format(epoch) + Color.ENDC)
 		model.train()
 		
-		index = np.random.permutation(train[0].shape[0])
+		index = np.random.permutation(datalen)
 		ep_loss, ep_acc, ep_f1 = 0, 0, 0
 
 		batch_inds = range(0, datalen, BATCH_SIZE)
@@ -162,40 +140,76 @@ def train_model(model, train, dev, ind2word):
 
 			batch_A          = A[batch_slice]
 			batch_ts         = ts[batch_slice]
+			batch_pos        = pos[batch_slice]
 			batch_word_index = word_index[batch_slice]
 			batch_cue        = cue[batch_slice]
 			batch_scope      = scope[batch_slice]
 
-			optimizer.zero_grad()
-			batch_output = model(batch_ts, batch_cue, batch_A)
-			batch_actual = predict(batch_output)
-
 			# Helper functions to visualize expected and actual outcomes
-			print_actual = lambda c=BATCH_SIZE: print_batch(batch_ts, batch_word_index, ind2word, cue=batch_cue, scope=batch_actual, cap=c)
-			print_expected = lambda c=BATCH_SIZE: print_batch(batch_ts, batch_word_index, ind2word, cue=batch_cue, scope=batch_scope, cap=c)
+			# FOR biLSTM ######
+			# w_index = None
+			# ELSE FOR GCN & TRNN ####
+			w_index = batch_word_index
+			###################
+			print_actual = lambda c=BATCH_SIZE: print_batch(batch_ts, ind2word, word_index=w_index, cue=batch_cue, scope=batch_actual, cap=c)
+			print_expected = lambda c=BATCH_SIZE: print_batch(batch_ts, ind2word, word_index=w_index, cue=batch_cue, scope=batch_scope, cap=c)
+			print_actual_pos = lambda c=BATCH_SIZE: print_batch(batch_ts, ind2word, word_index=w_index, cue=batch_cue, scope=batch_scope, cap=c, pos=(batch_pos, ind2pos))
+			
+			# FOR biLSTM ######
+			# seq_lens = []
+			# for j in range(batch_len):
+			# 	new_ts  = batch_ts[j,batch_word_index[j]]
+			# 	new_cue = batch_cue[j,batch_word_index[j]]
+			# 	new_len = new_ts.shape[-1]
+			# 	seq_lens.append(new_len)
+			# 	batch_ts[j].fill(0.)
+			# 	batch_ts[j,:new_len] = new_ts
+			# 	batch_cue[j].fill(0.)
+			# 	batch_cue[j,:new_len] = new_cue
+			###################
 
-			losses, accs, f1s = [], [], []
-			for j in range(batch_len):
-				class_output = batch_output[j,batch_word_index[j]]
-				actual = batch_actual[j,batch_word_index[j]]
-				expected = torch.tensor(batch_scope[j])
-				logged_out = torch.log(class_output)
-				losses.append(F.nll_loss(logged_out, expected, weight=class_wt))
-				# losses.append(f1_loss(class_output[:,1], expected))
-				accs.append(accuracy(actual, expected))
-				f1s.append(f1_score(actual, expected))
-				# pdb.set_trace()
+			optimizer.zero_grad()
+			# FOR BiLSTM ######
+			# batch_output = model(batch_ts, batch_pos, batch_cue)
+			# FOR GCN ####
+			# batch_output = model(batch_ts, batch_cue, batch_A)
+			# FOR TRNN ####
+			batch_output = model(batch_ts, batch_word_index, batch_cue, batch_A)
+			###################
+			
+			# batch_actual = predict(batch_output)
+			# losses, accs, f1s = [], [], []
 
-			loss = sum(losses)/batch_len
-			acc = sum(accs)/batch_len
-			f1 = sum(f1s)/batch_len
+			# for j in range(batch_len):
+			# 	# FOR BiLSTM ######
+			# 	# class_output = batch_output[j,:seq_lens[j]]
+			# 	# actual = batch_actual[j,:seq_lens[j]]
+			# 	# expected = torch.tensor(batch_scope[j])
+			# 	# FOR GCN & TRNN####
+			# 	class_output = batch_output[j,batch_word_index[j]]
+			# 	actual = batch_actual[j,batch_word_index[j]]
+			# 	expected = torch.tensor(batch_scope[j])
+			# 	###################
+				
 
-			if epoch == 5:
-				pdb.set_trace()
+			# 	# FOR Neg Log Likelihood
+			# 	# logged_out = torch.log(class_output)
+			# 	# losses.append(F.nll_loss(logged_out, expected))#, weight=class_wt))
 
-			# if (i % 200 == 0 and epoch == 0) or i % 2000 == 0:
-			if i % 150 == 0:
-				print(' - Samples ({}/{})'.format(i, datalen), \
+			# 	# OR FOR F1 LOSS
+			# 	losses.append(f1_loss(class_output[:,1], expected))
+
+			# 	accs.append(accuracy(actual, expected))
+			# 	f1s.append(f1_score(actual, expected))
+
+			# loss = sum(losses)/batch_len
+			# acc = sum(accs)/batch_len
+			# f1 = sum(f[0] for f in f1s)/batch_len
+
+			loss, acc, f1 = assess_batch(batch_output, batch_scope, batch_word_index, f1_loss)
+
+			if i % 400 == 0:
+				print(' - Samples {}-{} (of {})'.format(i, i+batch_len, datalen), \
 					'loss: {:0.4f}'.format(loss.item()), \
 					'acc: {:0.4f}'.format(acc), \
 					'f1: {:0.4f}'.format(f1))
@@ -204,21 +218,50 @@ def train_model(model, train, dev, ind2word):
 			ep_acc += acc
 			ep_f1 += f1
 			
-			# pdb.set_trace()
-
 			loss.backward()
 			optimizer.step()
 
 		ep_loss /= len(batch_inds)
 		ep_acc /= len(batch_inds)
 		ep_f1 /= len(batch_inds)
-		print(' :', \
-			'loss_train: {:.4f} '.format(ep_loss), \
-			'acc_train: {:.4f} '.format(ep_acc), \
-			'f1_train: {:.4f} '.format(ep_f1))
+		print(Color.OKBLUE + ' > train', \
+			'loss: {:.4f} '.format(ep_loss), \
+			'acc: {:.4f} '.format(ep_acc), \
+			'f1: {:.4f} '.format(ep_f1),
+			Color.ENDC)
 
-	print('FINISHED TRAINING')
+		# Dev set testing
+		# Unpack dev set data
+		dev_A, dev_ts, dev_pos, dev_word_index, dev_cue, dev_scope = dev
+		# Forward batch through model
+		dev_output = model(dev_ts, dev_word_index, dev_cue, dev_A)
+		# Count metrics and print
+		dev_loss, dev_acc, dev_f1 = assess_batch(dev_output, dev_scope, dev_word_index, f1_loss)
+		print(Color.OKGREEN + ' >   dev', \
+			'loss: {:.4f} '.format(dev_loss), \
+			'acc: {:.4f} '.format(dev_acc), \
+			'f1: {:.4f} '.format(dev_f1),
+			Color.ENDC)
+
+	print(Color.BOLD + '=== FINISHED TRAINING ===' + Color.ENDC)
 	# pdb.set_trace()
+
+	# Test Model
+	model.eval()
+	print(Color.BOLD + '=== BEGIN TESTING ===' + Color.ENDC)
+	# Unpack dev set data
+	test_A, test_ts, test_pos, test_word_index, test_cue, test_scope = test
+	# Forward dataset through model
+	test_output = model(test_ts, test_word_index, test_cue, test_A)
+	# Count metrics and print
+	test_loss, test_acc, test_f1 = assess_batch(test_output, test_scope, test_word_index, f1_loss)
+	print(Color.WARNING + ' >  test', \
+		'loss: {:.4f} '.format(test_loss), \
+		'acc: {:.4f} '.format(test_acc), \
+		'f1: {:.4f} '.format(test_f1),
+		Color.ENDC)
+
+	print(Color.BOLD + '=== FINISHED TESTING ===' + Color.ENDC)
 
 def predict(class_output):
 	return class_output.max(-1)[1]
@@ -241,17 +284,7 @@ def f1_score(actual, expected):
 
     F1 = 2 * precision * recall / (precision + recall + EPSILON)
     F1[torch.isnan(F1)] = 0.
-    return F1.mean()
-
-def test_model():
-	pass
-#	 model.eval()
-#	 output = model(features, adj)
-#	 loss_test = F.nll_loss(output[idx_test], labels[idx_test])
-#	 acc_test = accuracy(output[idx_test], labels[idx_test])
-#	 print("Test set results:",
-#		   "loss= {:.4f}".format(loss_test.item()),
-#		   "accuracy= {:.4f}".format(acc_test.item()))
+    return F1.mean(), precision, recall
 
 
 def main():
@@ -264,14 +297,27 @@ def main():
 
 	syntax = '../starsem-st-2012-data/cd-sco-CCG/corpus/'
 	directional = True
+	row_normalize = False
+	condense = True
 
 	# Retrieve data
-	corpora, word2ind = get_parse_data(only_negations=True, external_syntax_folder=syntax)
-	corpora[0] = [x for x in corpora[0] if x.longest_syntactic_path() <= GCN_LAYERS]
-	print('GCN_LAYERS', GCN_LAYERS)
+	corpora, word2ind, pos2ind = get_parse_data(
+		only_negations=True, 
+		external_syntax_folder=syntax,
+		condense_single_branches=condense)
+	# corpora[0] = [x for x in corpora[0] if x.longest_syntactic_path() <= 7]
+	# print('GCN_LAYERS', GCN_LAYERS)
+
+	# for t in corpora[0]:
+	# 	cs = [c.constituent for c in t.constituents]
+	# 	fcs = [c for c in t.constituents if len(c.children)==1 and not c.children[0].is_leaf()]
+	# 	if fcs:
+	# 		pdb.set_trace()
+
 	print('num sents', len(corpora[0]))
-	train, dev, test = format_data(corpora, word2ind, directional=directional)
+	train, dev, test = format_data(corpora, word2ind, pos2ind, directional=directional, row_normalize=row_normalize)
 	ind2word = {v:k for k,v in word2ind.items()}
+	ind2pos = {v:k for k,v in pos2ind.items()}
 
 	# for c in corpora:
 	# 	lengths = [t.longest_syntactic_path() for t in c]
@@ -297,18 +343,14 @@ def main():
 
 	# print(neg_toks/float(all_toks),neg_toks,all_toks)
 
-	# pdb.set_trace()
-
 	# Build model
-	model = build_model(len(word2ind), directional=directional)
+	# model = build_gcn_model(len(word2ind), directional=directional)
+	# model = build_word_model(len(word2ind), len(pos2ind))
+	model = build_tree_recurrent_model(len(word2ind))
 
-	# Train model
-	train_model(model, train, dev, ind2word)
+	# Train and Test model
+	run_model(model, train, dev, test, ind2word, ind2pos)
 
-	exit(0)
-
-	# Test model
-	# test_model(model, test)
 
 
 if __name__ == '__main__':

@@ -15,63 +15,6 @@ TEST_FILE_B = 'test-gold/SEM-2012-SharedTask-CD-SCO-test-circle-GOLD.txt'
 UNK_TOK = 1
 PAD_TOK = 0
 
-# def read_starsem_scope_data(fname):
-# 	''' Read in training data, parse sentence syntax, and construct consituent trees'''
-
-# 	# Read in annotation data from corpus
-	
-# 	# {chapter_name: {sentence_num: [sent, pos, syntax, [neg_scope1, neg_scope2]}}
-# 	chapters = defaultdict(lambda: defaultdict(lambda: [list(), list(), str(), [list(), list()]]))
-
-# 	with open(fname) as f:
-# 		for line in f:
-# 			if len(line) < 2:
-# 				continue
-
-# 			l = line.split('\t')
-# 			# [chapter, sent_num, tok_num, word, lemma, pos, syntax, [neg_trig, scope, event]{0,2} ]
-
-# 			ch, sent_num = l[0], int(l[1])
-
-# 			# Read parse tree data
-# 			chapters[ch][sent_num][0].append(l[3])
-# 			chapters[ch][sent_num][1].append(l[5])
-# 			chapters[ch][sent_num][2] += l[6]
-			
-# 			# Read negation data
-# 			if not '***' in l[-1]:
-# 				n1 = [None if x == '_' else x for x in l[7:10]]
-# 				chapters[ch][sent_num][3][0].append(n1)
-# 				if len(l) > 10:
-# 					n2 = [None if x == '_' else x for x in l[10:13]]
-# 					chapters[ch][sent_num][3][1].append(n2)
-				
-
-# 	# Simplify chapter data
-
-# 	# {chapter_name: [sent_vals]}
-# 	chapter_sents = {name: [vals for _,vals in sorted(sents.items(), key=lambda x: x[0])] for name,sents in chapters.items()}
-
-# 	# Construct constituent trees from input data, duplicating sentences if they have 2 negations
-
-# 	# {chapter_name: [ParsedSentence]}
-# 	chapter_trees = {}
-# 	for name,corpus in chapter_sents.items():
-# 		sents = []
-# 		for vals in corpus:
-# 			# 2 negations in this sentence
-# 			if vals[3][1]:
-# 				sents.append(ParsedSentence(*vals[:3], vals[3][0]))
-# 				sents.append(ParsedSentence(*vals[:3], vals[3][1]))
-# 			# 1 negation in this sentence
-# 			elif vals[3][0]:
-# 				sents.append(ParsedSentence(*vals[:3], vals[3][0]))
-# 			# 0 negations in this sentence
-# 			else:
-# 				sents.append(ParsedSentence(*vals[:3]))
-# 		chapter_trees[name] = sents
-
-# 	return chapter_trees
 
 def _starsem_sentence_vals(fname):
 	# sents : [[sent, pos, syntax, [neg_scope1, neg_scope2]]]
@@ -161,6 +104,7 @@ def _format_dataset(dataset, maxlen):
 	# adjust shape of A in case it's a directional matrix (will have extra indice)
 	A            = np.zeros(tuple([dlen] + list(Ashape[0:(len(Ashape)-2)]) + [maxlen, maxlen]))
 	ts           = np.zeros((dlen, maxlen), dtype=int)
+	pos          = np.zeros((dlen, maxlen), dtype=int)
 	word_index   = np.zeros(dlen, dtype=object)
 	cue          = np.zeros((dlen, maxlen))
 	scope        = np.zeros(dlen, dtype=object)
@@ -173,43 +117,33 @@ def _format_dataset(dataset, maxlen):
 		else:
 			A[i,0:ds[0],0:ds[1]] += d[0]
 		ts[i,0:len(d[1])]      += np.array(d[1])
-		word_index[i]           = np.array([i for i,v in enumerate(d[2]) if v])
-		cue[i,0:len(d[3])]     += np.array(d[3])
-		scope[i]                = np.array(d[4])
+		pos[i,0:len(d[2])]     += np.array(d[2])
+		word_index[i]           = np.array([i for i,v in enumerate(d[3]) if v])
+		cue[i,0:len(d[3])]     += np.array(d[4])
+		scope[i]                = np.array(d[5])
 
-	return (A, ts, word_index, cue, scope)
+	return (A, ts, pos, word_index, cue, scope)
 
 
-# def format_data(train_unpacked, dev_unpacked, test_unpacked):
-# 	# data format : [(A, ts, mask, cue, scope)]
-# 	maxlen = max(max(len(x[1]) for x in d) for d in [train_unpacked, dev_unpacked, test_unpacked])
-	
-# 	train = _format_dataset(train_unpacked, maxlen)
-# 	dev = _format_dataset(dev_unpacked, maxlen)
-# 	test = _format_dataset(test_unpacked, maxlen)
-
-# 	return train, dev, test
-
-def format_data(corpora, word2ind, directional=False):
+def format_data(corpora, word2ind, pos2ind, directional=False, row_normalize=True):
 	# input: a corpora : [[ParseTree]]
 	# output: reformatted data of type : [(A, ts, mask, cue, scope)]
 	data_splits = []
 	for corpus in corpora:
 		d = []
 		for s in corpus:
-			# A, ts, word_mask = s.adjacency_matrix(directional=True)
-			A, ts, word_mask = s.adjacency_matrix(directional=directional)
-			# cue = [word2ind.get(w, UNK_TOK) for w in s.negation_cue()]
-			ts = [word2ind.get(t, UNK_TOK) for t in ts]
+			A, toks, word_mask = s.adjacency_matrix(directional=directional, row_normalize=row_normalize)
+			ts = [word2ind.get(t, UNK_TOK) for t in toks]
+			pos = [pos2ind.get(p, UNK_TOK) for p in s.pos]
 			cue = s.negation_cue()
 			scope = s.negation_surface_scope()
-			d.append((A, ts, word_mask, cue, scope))
+			d.append((A, ts, pos, word_mask, cue, scope))
 		data_splits.append(d)
 
 	maxlen = max(max(len(s[1]) for s in d) for d in data_splits)
 	return [_format_dataset(d, maxlen) for d in data_splits]
 
-def read_corpora(only_words=False, only_negations=False, external_syntax_folder=None):
+def read_corpora(only_words=False, only_negations=False, external_syntax_folder=None, condense_single_branches=False):
 	# output: list of corpora, each a list of ParseTree : [[ParseTree]] OR a list of words : [[str]]
 	corpora = []
 	for corpus_file in [TRAINING_FILE, DEV_FILE, [TEST_FILE_A, TEST_FILE_B]]:
@@ -233,12 +167,15 @@ def read_corpora(only_words=False, only_negations=False, external_syntax_folder=
 		if only_negations:
 			if only_words:
 				# Keep sentence values if the negation component contains a scope
-				corpus = [vs for vs in corpus if v[-1][-1][0]]
+				corpus = [vs for vs in corpus if len(vs[-1][0])]
 			else:
 				corpus = [s for s in corpus if s.negation]
 
 		if only_words:
 			corpus = [vs[0] for vs in corpus]
+		elif condense_single_branches:
+			for t in corpus:
+				t.condense_single_branches()
 
 		corpora.append(corpus)
 		
@@ -247,12 +184,17 @@ def read_corpora(only_words=False, only_negations=False, external_syntax_folder=
 def make_word_index(corpus):
 	# input: a corpus, as a list of ParseTree : [ParseTree]
 	# output: a mapping of unique words to unique integers, with additional UNK and PAD tokens
-	all_cons = [(s.tree_node_tokens(), s.tree_leaf_tokens()) for s in corpus]
-	sen_cons, sen_words = tuple(zip(*all_cons))
+	sen_cons  = [s.tree_node_tokens() for s in corpus]
+	sen_words = [s.tree_leaf_tokens() for s in corpus]
 	cons_list, words_list = [x for s in sen_cons for x in s], [w for s in sen_words for w in s]
 	cons, words = set(cons_list), set(words_list)
 	vocab = cons | words
 
+	pos = set(pos for poses in [s.pos for s in corpus] for pos in poses)
+
+	return _make_index(vocab), _make_index(pos)
+
+def _make_index(vocab):
 	word2ind = {w:i+2 for i,w in enumerate(vocab)}
 	word2ind.update({'UNK':UNK_TOK, 'PAD':PAD_TOK})
 	return word2ind
@@ -261,14 +203,37 @@ def get_word_data():
 	return read_corpora(only_words=True)
 
 
-def get_parse_data(only_negations=False, external_syntax_folder=None):
+def get_parse_data(only_negations=False, external_syntax_folder=None, condense_single_branches=False):
 	# Read in corpus data
-	corpora = read_corpora(only_negations=only_negations, external_syntax_folder=external_syntax_folder)
+	corpora = read_corpora(
+		only_negations=only_negations, 
+		external_syntax_folder=external_syntax_folder, 
+		condense_single_branches=condense_single_branches)
 
 	# Build vocabulary from training data
-	word2ind = make_word_index(corpora[0])
+	word2ind, pos2ind = make_word_index(corpora[0])
 
-	return corpora, word2ind
+	return corpora, word2ind, pos2ind
+
+
+
+
+
+def main():
+	A_c2p = np.zeros((7,7))
+	c2p = [(0,4),(1,4),(2,5),(3,5),(4,6),(5,6)]
+	for pair in c2p:
+		A_c2p[pair] = 1
+	leaves = [1,1,1,1,0,0,0]
+	# pdb.set_trace()
+	a = adj_mat_to_binary_combs(A_c2p, A_c2p.T, leaves)
+	pdb.set_trace()
+
+if __name__ == '__main__':
+	main()
+
+
+
 
 
 
