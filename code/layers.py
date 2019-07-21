@@ -224,6 +224,7 @@ class RecurrentTagger(Module):
         return yhat
 
 
+
 # WORKING TRNN -- BASIC IMPLEMENTATION WITH NO BELLS OR WHISTLES
 
 # class TreeRecurrentTagger(Module):

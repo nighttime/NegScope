@@ -49,6 +49,7 @@ elif MODEL in (GCN, TRNN):
 	ES_PATIENCE = 2 * LR_PATIENCE
 
 
+
 def build_gcn_model(vocab_size, directional=False):
 	print(Color.BOLD + 'GCN MODEL' + Color.ENDC)
 	model = GraphConvTagger(GCN_LAYERS, EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab_size, directional=directional)
