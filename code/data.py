@@ -125,7 +125,7 @@ def _format_dataset(dataset, maxlen):
 	return (A, ts, pos, word_index, cue, scope)
 
 
-def format_data(corpora, word2ind, pos2ind, directional=False, row_normalize=True):
+def format_data(corpora, word2ind, syn2ind, directional=False, row_normalize=True):
 	# input: a corpora : [[ParseTree]]
 	# output: reformatted data of type : [(A, ts, mask, cue, scope)]
 	data_splits = []
@@ -133,8 +133,8 @@ def format_data(corpora, word2ind, pos2ind, directional=False, row_normalize=Tru
 		d = []
 		for s in corpus:
 			A, toks, word_mask = s.adjacency_matrix(directional=directional, row_normalize=row_normalize)
-			ts = [word2ind.get(t, UNK_TOK) for t in toks]
-			pos = [pos2ind.get(p, UNK_TOK) for p in s.pos]
+			ts = [word2ind.get(t, UNK_TOK) if word_mask[i] else syn2ind.get(t, UNK_TOK) for i,t in enumerate(toks)]
+			pos = [syn2ind.get(p, UNK_TOK) for p in s.pos]
 			cue = s.negation_cue()
 			scope = s.negation_surface_scope()
 			d.append((A, ts, pos, word_mask, cue, scope))
@@ -143,7 +143,7 @@ def format_data(corpora, word2ind, pos2ind, directional=False, row_normalize=Tru
 	maxlen = max(max(len(s[1]) for s in d) for d in data_splits)
 	return [_format_dataset(d, maxlen) for d in data_splits]
 
-def read_corpora(only_words=False, only_negations=False, external_syntax_folder=None, condense_single_branches=False):
+def read_corpora(only_words=False, only_negations=False, external_syntax_folder=None, derive_pos_from_syntax=False, condense_single_branches=False):
 	# output: list of corpora, each a list of ParseTree : [[ParseTree]] OR a list of words : [[str]]
 	corpora = []
 	for corpus_file in [TRAINING_FILE, DEV_FILE, [TEST_FILE_A, TEST_FILE_B]]:
@@ -173,26 +173,27 @@ def read_corpora(only_words=False, only_negations=False, external_syntax_folder=
 
 		if only_words:
 			corpus = [vs[0] for vs in corpus]
-		elif condense_single_branches:
-			for t in corpus:
-				t.condense_single_branches()
+		else:
+			if derive_pos_from_syntax:
+				for t in corpus:
+					t.pos = t.extract_pos_from_syntax()
+			if condense_single_branches:
+				for t in corpus:
+					t.condense_single_branches()
 
 		corpora.append(corpus)
 		
 	return corpora
 
-def make_word_index(corpus):
+def make_corpus_index(corpus):
 	# input: a corpus, as a list of ParseTree : [ParseTree]
 	# output: a mapping of unique words to unique integers, with additional UNK and PAD tokens
-	sen_cons  = [s.tree_node_tokens() for s in corpus]
-	sen_words = [s.tree_leaf_tokens() for s in corpus]
-	cons_list, words_list = [x for s in sen_cons for x in s], [w for s in sen_words for w in s]
-	cons, words = set(cons_list), set(words_list)
-	vocab = cons | words
+	words = set(w for s in corpus for w in s.tree_leaf_tokens())
+	cons  = set(c for s in corpus for c in s.tree_node_tokens())
+	poses = set(tag for s in corpus for tag in s.pos)
+	cons |= poses
 
-	pos = set(pos for poses in [s.pos for s in corpus] for pos in poses)
-
-	return _make_index(vocab), _make_index(pos)
+	return _make_index(words), _make_index(cons)
 
 def _make_index(vocab):
 	word2ind = {w:i+2 for i,w in enumerate(vocab)}
@@ -203,17 +204,18 @@ def get_word_data():
 	return read_corpora(only_words=True)
 
 
-def get_parse_data(only_negations=False, external_syntax_folder=None, condense_single_branches=False):
+def get_parse_data(only_negations=False, external_syntax_folder=None, derive_pos_from_syntax=False, condense_single_branches=False):
 	# Read in corpus data
 	corpora = read_corpora(
 		only_negations=only_negations, 
 		external_syntax_folder=external_syntax_folder, 
+		derive_pos_from_syntax=derive_pos_from_syntax,
 		condense_single_branches=condense_single_branches)
 
 	# Build vocabulary from training data
-	word2ind, pos2ind = make_word_index(corpora[0])
+	word2ind, syn2ind = make_corpus_index(corpora[0])
 
-	return corpora, word2ind, pos2ind
+	return corpora, word2ind, syn2ind
 
 
 

@@ -33,10 +33,14 @@ class ParsedSentence:
 			for i in range(len(self.children)):
 				while len(self.children[i].children) == 1:
 					self.children[i] = self.children[i].children[0]
-			# while len(self.children) == 1 and not self.children[0].is_leaf():
-			# 	self.children = self.children[0].children
 			for child in self.children:
 				child._condense_tree()
+
+		def _extract_pos_from_syntax(self):
+			if len(self.children) == 1 and self.children[0].is_leaf():
+				return [self.constituent]
+			else:
+				return [c for child in self.children for c in child._extract_pos_from_syntax()]
 
 		def __str__(self):
 			if self.is_leaf():
@@ -125,6 +129,12 @@ class ParsedSentence:
 	def tree_leaf_tokens(self):
 		'''List all terminal node tokens'''
 		return self.words
+
+	def extract_pos_from_syntax(self):
+		'''Extract POS tags provided in the syntax (i.e. as parent nodes) (non-destructive)'''
+		pos = self.root._extract_pos_from_syntax()
+		assert len(pos) == len(self.pos)
+		return pos
 
 	def adjacency_matrix(self, directional=False, self_loops=True, row_normalize=True):
 		'''Compute adjacency matrix of the parse tree (undirected graph). 

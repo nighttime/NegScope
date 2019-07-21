@@ -11,30 +11,57 @@ import torch.nn.functional as F
 import torch.optim as optim
 from layers import F1_Loss
 
-EMB_FEATURES = 128
-POS_EMB_FEATURES = 16
-HIDDEN_UNITS = 200
-GCN_LAYERS = 12
-NUM_CLASSES = 2
+GCN  = 0
+RNN  = 1
+TRNN = 2
 
-EPOCHS = 10
-LR = 0.01
-BATCH_SIZE = 25
+MODEL = TRNN
 
-WEIGHT_DECAY = 5e-4
-DROPOUT = 0.25
+
+if MODEL == RNN:
+	EMB_FEATURES = 200
+	POS_EMB_FEATURES = 32
+	HIDDEN_UNITS = 200
+	GCN_LAYERS = 12
+	NUM_CLASSES = 2
+
+	EPOCHS = 15
+	LR = 0.001
+	BATCH_SIZE = 30
+
+	WEIGHT_DECAY = 5e-4
+	DROPOUT = 0.25
+
+elif MODEL in (GCN, TRNN):
+	EMB_FEATURES = 128
+	POS_EMB_FEATURES = 16
+	HIDDEN_UNITS = 150 #150
+	GCN_LAYERS = 12
+	NUM_CLASSES = 2
+
+	EPOCHS = 40
+	LR = 0.01 #0.001 is good!
+	BATCH_SIZE = 30
+
+	WEIGHT_DECAY = 0
+	DROPOUT_P = 0
+	LR_PATIENCE = 10
+	ES_PATIENCE = 2 * LR_PATIENCE
 
 
 def build_gcn_model(vocab_size, directional=False):
-	model = GCN(GCN_LAYERS, EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab_size, directional=directional)
+	print(Color.BOLD + 'GCN MODEL' + Color.ENDC)
+	model = GraphConvTagger(GCN_LAYERS, EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab_size, directional=directional)
 	return model
 
 def build_recurrent_model(vocab_size, pos_size):
+	print(Color.BOLD + 'RNN MODEL' + Color.ENDC)
 	model = RecurrentTagger(EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab_size, POS_EMB_FEATURES, pos_size)
 	return model
 
-def build_tree_recurrent_model(vocab_size):
-	model = TreeRecurrentTagger(HIDDEN_UNITS, NUM_CLASSES, vocab_size)
+def build_tree_recurrent_model(vocab_size, syntax_size):
+	print(Color.BOLD + 'TRNN MODEL' + Color.ENDC)
+	model = TreeRecurrentTagger(HIDDEN_UNITS, NUM_CLASSES, vocab_size, syntax_size, dropout_p=DROPOUT_P)
 	return model
 
 def decode(inds, ind2word):
@@ -63,7 +90,7 @@ def print_sent(tokens, word_index, ind2word, cue=None, scope=None, pos=None):
 					end += Color.ENDC
 			p = ''
 			if pos is not None:
-				p = '|' + pos[1][pos[0][word_ct]]
+				p = '|' + ind2word[pos[word_ct]]
 			s += begin + ind2word[t] + end + p + ' '
 			word_ct += 1
 	print(s)
@@ -76,57 +103,24 @@ def print_batch(tokens, ind2word, word_index=None, cue=None, scope=None, pos=Non
 				ind2word, 
 				cue[b] if cue is not None else None, 
 				scope[b] if scope is not None else None, 
-				pos=((pos[0][b], pos[1]) if pos is not None else None)
+				pos=(pos[0][b] if pos is not None else None)
 				)
 
-def assess_batch(model_output, y, word_index, loss_criterion):
-	assert model_output.shape[0] == y.shape[0]
-	batch_len = y.shape[0]
 
-	yhat = predict(model_output)
-	losses, accs, f1s = [], [], []
-
-	for j in range(batch_len):
-		# FOR BiLSTM ######
-		# confidence_output = model_output[j,:seq_lens[j]]
-		# class_output = yhat[j,:seq_lens[j]]
-		# expected_output = torch.tensor(y[j])
-		# FOR GCN & TRNN####
-		confidence_output = model_output[j,word_index[j]]
-		class_output = yhat[j,word_index[j]]
-		expected_output = torch.tensor(y[j])
-		###################
-		
-
-		# FOR Neg Log Likelihood
-		# logged_out = torch.log(confidence_output)
-		# losses.append(F.nll_loss(logged_out, expected_output))#, weight=class_wt))
-
-		# OR FOR F1 LOSS
-		losses.append(loss_criterion(confidence_output[:,1], expected_output))
-
-		accs.append(accuracy(class_output, expected_output))
-		f1s.append(f1_score(class_output, expected_output))
-
-	loss = sum(losses)/batch_len
-	acc = sum(accs)/batch_len
-	f1 = sum(f[0] for f in f1s)/batch_len
-
-	return loss, acc, f1
-
-
-
-def run_model(model, train, dev, test, ind2word, ind2pos):
-	optimizer = optim.Adam(model.parameters(), lr=LR)#, weight_decay=WEIGHT_DECAY)
+def run_model(model, train, dev, test, ind2word, ind2syn):
+	optimizer = optim.Adam(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
+	scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=LR_PATIENCE, verbose=True)
 	A, ts, pos, word_index, cue, scope = train
 	datalen = A.shape[0]
-	# class_wt = torch.tensor([0.1, 10.0]) # negated sentences to non-neg
-	class_wt = torch.tensor([0.681,0.319]) # negated tokens to non-neg (given sentence has cue)
 	f1_loss = F1_Loss()
+
+	hist = {'train': [], 'dev': [], 'test': []}
+	train_improvement_counter = 0
+	test_improvement_counter = 0
 
 	print('== BEGIN TRAINING ==')
 	for epoch in range(EPOCHS):
-		print(Color.BOLD + '* Epoch: {:02d} -------------'.format(epoch) + Color.ENDC)
+		print(Color.BOLD + '* Epoch: {} -------------'.format(epoch) + Color.ENDC)
 		model.train()
 		
 		index = np.random.permutation(datalen)
@@ -145,74 +139,33 @@ def run_model(model, train, dev, test, ind2word, ind2pos):
 			batch_cue        = cue[batch_slice]
 			batch_scope      = scope[batch_slice]
 
+			if MODEL == RNN:
+				w_index = None
+			elif MODEL in (GCN, TRNN):
+				w_index = batch_word_index
+			
+			seq_lens = None
+
+			# Pack data, removing tree structure
+			if MODEL == RNN:
+				seq_lens = pack_input_data_inplace(batch_ts, batch_cue, batch_word_index)
+				
+			# pdb.set_trace()
+			optimizer.zero_grad()
+
+			if MODEL == RNN:
+				batch_output = model(batch_ts, batch_cue, batch_pos)
+			elif MODEL == GCN:
+				batch_output = model(batch_ts, batch_cue, batch_A)
+			elif MODEL == TRNN:
+				batch_output = model(batch_ts, batch_word_index, batch_cue, batch_A, batch_pos)
+			
+			loss, acc, f1, batch_actual = assess_batch(batch_output, batch_scope, batch_word_index, f1_loss, seq_lens)
+
 			# Helper functions to visualize expected and actual outcomes
-			# FOR biLSTM ######
-			# w_index = None
-			# ELSE FOR GCN & TRNN ####
-			w_index = batch_word_index
-			###################
 			print_actual = lambda c=BATCH_SIZE: print_batch(batch_ts, ind2word, word_index=w_index, cue=batch_cue, scope=batch_actual, cap=c)
 			print_expected = lambda c=BATCH_SIZE: print_batch(batch_ts, ind2word, word_index=w_index, cue=batch_cue, scope=batch_scope, cap=c)
-			print_actual_pos = lambda c=BATCH_SIZE: print_batch(batch_ts, ind2word, word_index=w_index, cue=batch_cue, scope=batch_scope, cap=c, pos=(batch_pos, ind2pos))
-			
-			# FOR biLSTM ######
-			# seq_lens = []
-			# for j in range(batch_len):
-			# 	new_ts  = batch_ts[j,batch_word_index[j]]
-			# 	new_cue = batch_cue[j,batch_word_index[j]]
-			# 	new_len = new_ts.shape[-1]
-			# 	seq_lens.append(new_len)
-			# 	batch_ts[j].fill(0.)
-			# 	batch_ts[j,:new_len] = new_ts
-			# 	batch_cue[j].fill(0.)
-			# 	batch_cue[j,:new_len] = new_cue
-			###################
-
-			optimizer.zero_grad()
-			# FOR BiLSTM ######
-			# batch_output = model(batch_ts, batch_pos, batch_cue)
-			# FOR GCN ####
-			# batch_output = model(batch_ts, batch_cue, batch_A)
-			# FOR TRNN ####
-			batch_output = model(batch_ts, batch_word_index, batch_cue, batch_A)
-			###################
-			
-			# batch_actual = predict(batch_output)
-			# losses, accs, f1s = [], [], []
-
-			# for j in range(batch_len):
-			# 	# FOR BiLSTM ######
-			# 	# class_output = batch_output[j,:seq_lens[j]]
-			# 	# actual = batch_actual[j,:seq_lens[j]]
-			# 	# expected = torch.tensor(batch_scope[j])
-			# 	# FOR GCN & TRNN####
-			# 	class_output = batch_output[j,batch_word_index[j]]
-			# 	actual = batch_actual[j,batch_word_index[j]]
-			# 	expected = torch.tensor(batch_scope[j])
-			# 	###################
-				
-
-			# 	# FOR Neg Log Likelihood
-			# 	# logged_out = torch.log(class_output)
-			# 	# losses.append(F.nll_loss(logged_out, expected))#, weight=class_wt))
-
-			# 	# OR FOR F1 LOSS
-			# 	losses.append(f1_loss(class_output[:,1], expected))
-
-			# 	accs.append(accuracy(actual, expected))
-			# 	f1s.append(f1_score(actual, expected))
-
-			# loss = sum(losses)/batch_len
-			# acc = sum(accs)/batch_len
-			# f1 = sum(f[0] for f in f1s)/batch_len
-
-			loss, acc, f1 = assess_batch(batch_output, batch_scope, batch_word_index, f1_loss)
-
-			if i % 400 == 0:
-				print(' - Samples {}-{} (of {})'.format(i, i+batch_len, datalen), \
-					'loss: {:0.4f}'.format(loss.item()), \
-					'acc: {:0.4f}'.format(acc), \
-					'f1: {:0.4f}'.format(f1))
+			print_actual_pos = lambda c=BATCH_SIZE: print_batch(batch_ts, ind2word, word_index=w_index, cue=batch_cue, scope=batch_scope, cap=c, pos=batch_pos)
 
 			ep_loss += loss.item()
 			ep_acc += acc
@@ -221,47 +174,119 @@ def run_model(model, train, dev, test, ind2word, ind2pos):
 			loss.backward()
 			optimizer.step()
 
+			progress = float(i+batch_len)/datalen
+			print_progress(progress, info='{:.3f}'.format(f1))
+
 		ep_loss /= len(batch_inds)
 		ep_acc /= len(batch_inds)
 		ep_f1 /= len(batch_inds)
-		print(Color.OKBLUE + ' > train', \
-			'loss: {:.4f} '.format(ep_loss), \
-			'acc: {:.4f} '.format(ep_acc), \
-			'f1: {:.4f} '.format(ep_f1),
-			Color.ENDC)
+		hist['train'].append([ep_loss, ep_acc, ep_f1])
 
-		# Dev set testing
-		# Unpack dev set data
-		dev_A, dev_ts, dev_pos, dev_word_index, dev_cue, dev_scope = dev
-		# Forward batch through model
-		dev_output = model(dev_ts, dev_word_index, dev_cue, dev_A)
-		# Count metrics and print
-		dev_loss, dev_acc, dev_f1 = assess_batch(dev_output, dev_scope, dev_word_index, f1_loss)
-		print(Color.OKGREEN + ' >   dev', \
-			'loss: {:.4f} '.format(dev_loss), \
-			'acc: {:.4f} '.format(dev_acc), \
-			'f1: {:.4f} '.format(dev_f1),
-			Color.ENDC)
+		print()
+		print_results(ep_loss, ep_acc, ep_f1, 'train', Color.OKBLUE)
 
-	print(Color.BOLD + '=== FINISHED TRAINING ===' + Color.ENDC)
-	# pdb.set_trace()
+		with torch.no_grad():
+			# Dev set testing
+			*dev_results, _ = test_dataset(model, dev, f1_loss)
+			hist['dev'].append(dev_results)
+			print_results(*dev_results, 'dev', Color.FAIL)
 
-	# Test Model
+			# Test set testing
+			*test_results, _ = test_dataset(model, test, f1_loss)
+			hist['test'].append(test_results)
+			print_results(*test_results, 'test', Color.OKGREEN)
+
+		scheduler.step(dev_results[0])
+
+		if epoch > 0 and test_results[2] <= hist['test'][-2][2]:
+			test_improvement_counter += 1
+		else:
+			test_improvement_counter = 0
+		if test_improvement_counter > ES_PATIENCE:
+			print(Color.WARNING + '~~~ EARLY STOPPING ~~~' + Color.ENDC)
+			break
+
+	pdb.set_trace()
+	print(Color.BOLD + '=== FINISHED ===' + Color.ENDC)
+
+def pack_input_data_inplace(ts, cue, word_index):
+	seq_lens = []
+	for j in range(test_ts.shape[0]):
+		new_ts  = ts[j,word_index[j]]
+		new_cue = cue[j,word_index[j]]
+		new_len = new_ts.shape[-1]
+		seq_lens.append(new_len)
+		ts[j].fill(0.)
+		ts[j,:new_len] = new_ts
+		cue[j].fill(0.)
+		cue[j,:new_len] = new_cue
+	return seq_lens
+
+def test_dataset(model, dataset, loss_criterion):
 	model.eval()
-	print(Color.BOLD + '=== BEGIN TESTING ===' + Color.ENDC)
 	# Unpack dev set data
-	test_A, test_ts, test_pos, test_word_index, test_cue, test_scope = test
-	# Forward dataset through model
-	test_output = model(test_ts, test_word_index, test_cue, test_A)
-	# Count metrics and print
-	test_loss, test_acc, test_f1 = assess_batch(test_output, test_scope, test_word_index, f1_loss)
-	print(Color.WARNING + ' >  test', \
-		'loss: {:.4f} '.format(test_loss), \
-		'acc: {:.4f} '.format(test_acc), \
-		'f1: {:.4f} '.format(test_f1),
-		Color.ENDC)
+	test_A, test_ts, test_pos, test_word_index, test_cue, test_scope = dataset
+	seq_lens = None
 
-	print(Color.BOLD + '=== FINISHED TESTING ===' + Color.ENDC)
+	# Pack data, removing tree structure
+	if MODEL == RNN:
+		seq_lens = pack_input_data_inplace(test_ts, test_cue, test_word_index)
+
+	# Forward dataset through model
+	if MODEL == GCN:
+		test_output = model(test_ts, test_cue, test_A)
+	elif MODEL == RNN:
+		test_output = model(test_ts, test_cue, test_pos)
+	elif MODEL == TRNN:
+		test_output = model(test_ts, test_word_index, test_cue, test_A, test_pos)
+	
+	# Count metrics
+	return assess_batch(test_output, test_scope, test_word_index, loss_criterion, seq_lens=seq_lens)
+
+def assess_batch(model_output, y, word_index, loss_criterion, seq_lens=None):
+	assert model_output.shape[0] == y.shape[0]
+	batch_len = y.shape[0]
+
+	yhat = predict(model_output)
+	losses, accs, f1s = [], [], []
+
+	# class_wt = torch.tensor([0.1, 10.0]) # negated sentences to non-neg
+	class_wt = torch.tensor([0.681,0.319]) # negated tokens to non-neg (given sentence has cue)
+
+	for j in range(batch_len):
+		if MODEL == RNN:
+			confidence_output = model_output[j,:seq_lens[j]]
+			class_output = yhat[j,:seq_lens[j]]
+			expected_output = torch.tensor(y[j])
+		elif MODEL in (GCN, TRNN):
+			confidence_output = model_output[j,word_index[j]]
+			class_output = yhat[j,word_index[j]]
+			expected_output = torch.tensor(y[j])
+
+		# FOR Neg Log Likelihood
+		# log_output = torch.log(confidence_output)
+		# losses.append(F.nll_loss(log_output, expected_output, weight=class_wt))
+		# OR FOR F1 LOSS
+		losses.append(loss_criterion(confidence_output[:,1], expected_output))
+
+		accs.append(accuracy(class_output, expected_output))
+		f1s.append(f1_score(class_output, expected_output))
+
+	loss = sum(losses)/batch_len
+	acc = sum(accs)/batch_len
+	f1 = sum(f[0] for f in f1s)/batch_len
+
+	return loss, acc, f1, yhat
+
+def print_results(loss, acc, f1, name, color=None):
+	print((color + ' >' if color else ' -') + ' {:>6}'.format(name), \
+		'loss: {:.4f} '.format(loss), \
+		'acc: {:.4f} '.format(acc), \
+		'f1: {:.4f} '.format(f1) + (Color.ENDC if color else ''))
+
+def print_progress(progress, info='', bar_len=20):
+	filled = int(progress*bar_len)
+	print('\r[{}{}] {:.2f}% {}'.format('=' * filled, ' ' * (bar_len-filled), progress*100, info), end='')
 
 def predict(class_output):
 	return class_output.max(-1)[1]
@@ -295,29 +320,28 @@ def main():
 	# if args.syntax and args.syntax[-1] != '/':
 	# 	args.syntax += '/'
 
-	syntax = '../starsem-st-2012-data/cd-sco-CCG/corpus/'
+	syntax_folder = '../starsem-st-2012-data/cd-sco-CCG/corpus/'
 	directional = True
 	row_normalize = False
-	condense = True
+	pos_from_syntax=True
+	condense_trees = True
 
 	# Retrieve data
-	corpora, word2ind, pos2ind = get_parse_data(
+	corpora, word2ind, syn2ind = get_parse_data(
 		only_negations=True, 
-		external_syntax_folder=syntax,
-		condense_single_branches=condense)
+		external_syntax_folder=syntax_folder,
+		derive_pos_from_syntax=pos_from_syntax,
+		condense_single_branches=condense_trees)
+
+	# pdb.set_trace()
 	# corpora[0] = [x for x in corpora[0] if x.longest_syntactic_path() <= 7]
 	# print('GCN_LAYERS', GCN_LAYERS)
-
-	# for t in corpora[0]:
-	# 	cs = [c.constituent for c in t.constituents]
-	# 	fcs = [c for c in t.constituents if len(c.children)==1 and not c.children[0].is_leaf()]
-	# 	if fcs:
-	# 		pdb.set_trace()
-
+	# print('all single branches are attached to leaves i guess')
+	# exit(0)
 	print('num sents', len(corpora[0]))
-	train, dev, test = format_data(corpora, word2ind, pos2ind, directional=directional, row_normalize=row_normalize)
+	train, dev, test = format_data(corpora, word2ind, syn2ind, directional=directional, row_normalize=row_normalize)
 	ind2word = {v:k for k,v in word2ind.items()}
-	ind2pos = {v:k for k,v in pos2ind.items()}
+	ind2syn  = {v:k for k,v in syn2ind.items()}
 
 	# for c in corpora:
 	# 	lengths = [t.longest_syntactic_path() for t in c]
@@ -332,24 +356,24 @@ def main():
 
 	
 
-	# pdb.set_trace()
-
 	#	A, ts, word_index, cue, scope = train
 	# all_toks = 0
 	# neg_toks = 0
 	# for i in range(train[1].shape[0]):
 	# 	all_toks += len(train[2][i])
 	# 	neg_toks += np.sum(train[4][i])
-
 	# print(neg_toks/float(all_toks),neg_toks,all_toks)
 
 	# Build model
-	# model = build_gcn_model(len(word2ind), directional=directional)
-	# model = build_word_model(len(word2ind), len(pos2ind))
-	model = build_tree_recurrent_model(len(word2ind))
+	if MODEL == GCN:
+		model = build_gcn_model(len(word2ind), directional=directional)
+	elif MODEL == RNN:
+		model = build_recurrent_model(len(word2ind), len(syn2ind))
+	elif MODEL == TRNN:
+		model = build_tree_recurrent_model(len(word2ind), len(syn2ind))
 
 	# Train and Test model
-	run_model(model, train, dev, test, ind2word, ind2pos)
+	run_model(model, train, dev, test, ind2word, ind2syn)
 
 
 
