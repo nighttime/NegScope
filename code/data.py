@@ -99,6 +99,7 @@ def _format_dataset(dataset, maxlen):
 	# output: reformatted as numpy arrays : (A, ts, mask, cue, scope)
 	dlen = len(dataset)
 	Ashape = dataset[0][0].shape
+	pretrained_embs = len(dataset[0]) > 6
 
 	# A            = np.zeros((dlen, maxlen, maxlen))
 	# adjust shape of A in case it's a directional matrix (will have extra indice)
@@ -108,10 +109,14 @@ def _format_dataset(dataset, maxlen):
 	word_index   = np.zeros(dlen, dtype=object)
 	cue          = np.zeros((dlen, maxlen))
 	scope        = np.zeros(dlen, dtype=object)
+	if pretrained_embs:
+		embs     = np.zeros(dlen, dtype=object)
+	else:
+		embs     = None
 
 	for i,d in enumerate(dataset):
 		ds = d[0].shape
-		# pdb.set_trace()
+		
 		if len(ds) == 3:
 			A[i,:,0:ds[1],0:ds[2]] += d[0]
 		else:
@@ -121,23 +126,48 @@ def _format_dataset(dataset, maxlen):
 		word_index[i]           = np.array([i for i,v in enumerate(d[3]) if v])
 		cue[i,0:len(d[3])]     += np.array(d[4])
 		scope[i]                = np.array(d[5])
+		if pretrained_embs:
+			embs[i]             = d[6]
 
-	return (A, ts, pos, word_index, cue, scope)
+	return (A, ts, pos, word_index, cue, scope, embs)
 
 
-def format_data(corpora, word2ind, syn2ind, directional=False, row_normalize=True):
+def format_data(corpora, word2ind, syn2ind, directional=False, row_normalize=True, pretrained_embs_model=None):
 	# input: a corpora : [[ParseTree]]
 	# output: reformatted data of type : [(A, ts, mask, cue, scope)]
 	data_splits = []
 	for corpus in corpora:
 		d = []
-		for s in corpus:
+		for i,s in enumerate(corpus):
 			A, toks, word_mask = s.adjacency_matrix(directional=directional, row_normalize=row_normalize)
 			ts = [word2ind.get(t, UNK_TOK) if word_mask[i] else syn2ind.get(t, UNK_TOK) for i,t in enumerate(toks)]
 			pos = [syn2ind.get(p, UNK_TOK) for p in s.pos]
 			cue = s.negation_cue()
 			scope = s.negation_surface_scope()
-			d.append((A, ts, pos, word_mask, cue, scope))
+			items = [A, ts, pos, word_mask, cue, scope]
+
+			if pretrained_embs_model is not None:
+				words = s.tree_leaf_tokens()
+				sent = ' '.join(words)
+				tokens = pretrained_embs_model.tokenizer.encode(sent)
+				input_ids = torch.tensor([tokens])
+				model_outputs = pretrained_embs_model.model(input_ids)
+				hidden_states = model_outputs[0].squeeze() # model outputs
+				# hidden_states = model_outputs[2][4].squeeze() # model intermediate layer outputs
+				partial_toks = [pretrained_embs_model.tokenizer._convert_id_to_token(tokens[i]) for i in range(len(tokens))]
+				embs = np.zeros([len(words), hidden_states.shape[-1]])
+				
+				ct = -1
+				for j,t in enumerate(partial_toks):
+					if not t.startswith('##'):
+						ct += 1
+					embs[ct] += hidden_states[j].detach().numpy()
+				items.append(embs)
+
+			d.append(tuple(items))
+			print('\rencoding dataset: {:.3f}'.format(float(i+1)/len(corpus)), end='')
+		print()
+
 		data_splits.append(d)
 
 	maxlen = max(max(len(s[1]) for s in d) for d in data_splits)
@@ -204,7 +234,11 @@ def get_word_data():
 	return read_corpora(only_words=True)
 
 
-def get_parse_data(only_negations=False, external_syntax_folder=None, derive_pos_from_syntax=False, condense_single_branches=False):
+def get_parse_data(
+	only_negations=False, 
+	external_syntax_folder=None, 
+	derive_pos_from_syntax=False, 
+	condense_single_branches=False):
 	# Read in corpus data
 	corpora = read_corpora(
 		only_negations=only_negations, 
@@ -215,7 +249,13 @@ def get_parse_data(only_negations=False, external_syntax_folder=None, derive_pos
 	# Build vocabulary from training data
 	word2ind, syn2ind = make_corpus_index(corpora[0])
 
-	return corpora, word2ind, syn2ind
+	train_voc = set(word2ind.keys())
+	dev_voc   = set(make_corpus_index(corpora[1])[0].keys())
+	test_voc  = set(make_corpus_index(corpora[2])[0].keys())
+
+	full_vocab = train_voc | dev_voc | test_voc
+
+	return corpora, word2ind, syn2ind, full_vocab
 
 
 

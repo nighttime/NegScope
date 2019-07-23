@@ -11,13 +11,13 @@ I know you could if you only would . ''
 Holmes was accessible upon the side of flattery , and also , to do him justice , upon the side of kindliness .
 The two forces made him lay down his gum-brush with a sigh of resignation and push back his chair .
 `` Well , well , Mrs. Warren , let us hear about it , then .
-You do n't object to tobacco , I take it ?
+You do not object to tobacco , I take it ?
 Thank you , Watson -- the matches !
 You are uneasy , as I understand , because your new lodger remains in his rooms and you can not see him .
 Why , bless you , Mrs. Warren , if I were your lodger you often would not see me for weeks on end . ''
 `` No doubt , sir ; but this is different .
 It frightens me , Mr. Holmes .
-I ca n't sleep for fright .
+I ca not sleep for fright .
 To hear his quick step moving here and moving there from early morning to late at night , and yet never to catch so much as a glimpse of him -- it 's more than I can stand .
 My husband is as nervous over it as I am , but he is out at his work all day , while I get no rest from it .
 What is he hiding for ?
@@ -101,7 +101,7 @@ Dark clothes -- nothing you would note . ''
 `` Dear me ! that is certainly remarkable .
 What about his luggage ? ''
 `` He had one big brown bag with him -- nothing else . ''
-`` Well , we do n't seem to have much material to help us .
+`` Well , we do not seem to have much material to help us .
 Do you say nothing has come out of that room -- absolutely nothing ? ''
 The landlady drew an envelope from her bag ; from it she shook out two burnt matches and a cigarette-end upon the table .
 `` They were on his tray this morning .
@@ -114,7 +114,7 @@ Half the match is consumed in lighting a pipe or cigar .
 But , dear me ! this cigarette stub is certainly remarkable .
 The gentleman was bearded and moustached , you say ? ''
 `` Yes , sir . ''
-`` I do n't understand that .
+`` I do not understand that .
 I should say that only a clean-shaven man could have smoked this .
 Why , Watson , even your modest moustache would have been singed . ''
 `` A holder ? '' I suggested .
@@ -127,7 +127,7 @@ After all , you have nothing to complain of .
 You have received your rent , and he is not a troublesome lodger , though he is certainly an unusual one .
 He pays you well , and if he chooses to lie concealed it is no direct business of yours .
 We have no excuse for an intrusion upon his privacy until we have some reason to think that there is a guilty reason for it .
-I 've taken up the matter , and I wo n't lose sight of it .
+I 've taken up the matter , and I wo not lose sight of it .
 Report to me if anything fresh occurs , and rely upon my assistance if it should be needed .
 `` There are certainly some points of interest in this case , Watson , '' he remarked when the landlady had left us .
 `` It may , of course , be trivial -- individual eccentricity ; or it may be very much deeper than appears on the surface .
@@ -181,7 +181,7 @@ You will hear soon .
 G . '
 That was in yesterday 's paper , and there is nothing in to-day 's .
 It 's all very appropriate to Mrs. Warren 's lodger .
-If we wait a little , Watson , I do n't doubt that the affair will grow more intelligible . ''
+If we wait a little , Watson , I do not doubt that the affair will grow more intelligible . ''
 So it proved ; for in the morning I found my friend standing on the hearthrug with his back to the fire and a smile of complete satisfaction upon his face .
 `` How 's this , Watson ? '' he cried , picking up the paper from the table .
 `` ` High red house with white stone facings .
@@ -228,7 +228,7 @@ On discovering their mistake they released him .
 What they would have done had it not been a mistake , we can only conjecture . ''
 `` Well , what am I to do , Mr. Holmes ? ''
 `` I have a great fancy to see this lodger of yours , Mrs. Warren . ''
-`` I do n't see how that is to be managed , unless you break in the door .
+`` I do not see how that is to be managed , unless you break in the door .
 I always hear him unlock it as I go down the stair after I leave the tray . ''
 `` He has to take the tray in .
 Surely we could conceal ourselves and see him do it . ''
@@ -320,7 +320,7 @@ Another T .
 Surely this is the beginning of a second word .
 Now , then -- TENTA .
 Dead stop .
-That ca n't be all , Watson ?
+That ca not be all , Watson ?
 ATTENTA gives no sense .
 Nor is it any better as three words AT , TEN , TA , unless T. A. are a person 's initials .
 There it goes again !
@@ -351,7 +351,7 @@ Wait a bit , he is coming to the window once more . ''
 Again we saw the dim silhouette of a crouching man and the whisk of the small flame across the window as the signals were renewed .
 They came more rapidly than before -- so rapid that it was hard to follow them .
 `` PERICOLO -- pericolo -- eh , what 's that , Watson ?
-` Danger , ' is n't it ?
+` Danger , ' is not it ?
 Yes , by Jove , it 's a danger signal .
 There he goes again !
 PERI .
@@ -378,7 +378,7 @@ He started as the hall-light fell upon our faces .
 `` Journeys end with lovers ' meetings .
 What brings you here ? ''
 `` The same reasons that bring you , I expect , '' said Gregson .
-`` How you got on to it I ca n't imagine . ''
+`` How you got on to it I ca not imagine . ''
 `` Different threads , but leading up to the same tangle .
 I 've been taking the signals . ''
 `` Signals ? ''
@@ -387,7 +387,7 @@ They broke off in the middle .
 We came over to see the reason .
 But since it is safe in your hands I see no object in continuing this business . ''
 `` Wait a bit ! '' cried Gregson eagerly .
-`` I 'll do you this justice , Mr. Holmes , that I was never in a case yet that I did n't feel stronger for having you on my side .
+`` I 'll do you this justice , Mr. Holmes , that I was never in a case yet that I did not feel stronger for having you on my side .
 There 's only the one exit to these flats , so we have him safe . ''
 `` Who is he ? ''
 `` Well , well , we score over you for once , Mr. Holmes .
@@ -406,10 +406,10 @@ Gorgiano of the Red Circle ? ''
 Well , we 've learned all about him in America .
 We KNOW he is at the bottom of fifty murders , and yet we have nothing positive we can take him on .
 I tracked him over from New York , and I 've been close to him for a week in London , waiting some excuse to get my hand on his collar .
-Mr. Gregson and I ran him to ground in that big tenement house , and there 's only one door , so he ca n't slip us .
-There 's three folk come out since he went in , but I 'll swear he was n't one of them . ''
+Mr. Gregson and I ran him to ground in that big tenement house , and there 's only one door , so he ca not slip us .
+There 's three folk come out since he went in , but I 'll swear he was not one of them . ''
 `` Mr. Holmes talks of signals , '' said Gregson .
-`` I expect , as usual , he knows a good deal that we do n't . ''
+`` I expect , as usual , he knows a good deal that we do not . ''
 In a few clear words Holmes explained the situation as it had appeared to us .
 The American struck his hands together with vexation .
 `` He 's on to us ! '' he cried .
@@ -423,7 +423,7 @@ What do you suggest , Mr. Holmes ? ''
 `` But we have no warrant for his arrest . ''
 `` He is in unoccupied premises under suspicious circumstances , '' said Gregson .
 `` That is good enough for the moment .
-When we have him by the heels we can see if New York ca n't help us to keep him .
+When we have him by the heels we can see if New York ca not help us to keep him .
 I 'll take the responsibility of arresting him now . ''
 Our official detectives may blunder in the matter of intelligence , but never in that of courage .
 Gregson climbed the stair to arrest this desperate murderer with the same absolutely quiet and businesslike bearing with which he would have ascended the official staircase of Scotland Yard .
@@ -582,10 +582,10 @@ But once as I looked through my window , I saw two Italians watching the house ,
 Finally Gennaro told me , through the paper , that he would signal to me from a certain window , but when the signals came they were nothing but warnings , which were suddenly interrupted .
 It is very clear to me now that he knew Gorgiano to be close upon him , and that , thank God ! he was ready for him when he came .
 And now , gentleman , I would ask you whether we have anything to fear from the law , or whether any judge upon earth would condemn my Gennaro for what he has done ? ''
-`` Well , Mr. Gregson , '' said the American , looking across at the official , `` I do n't know what your British point of view may be , but I guess that in New York this lady 's husband will receive a pretty general vote of thanks . ''
+`` Well , Mr. Gregson , '' said the American , looking across at the official , `` I do not know what your British point of view may be , but I guess that in New York this lady 's husband will receive a pretty general vote of thanks . ''
 `` She will have to come with me and see the chief , '' Gregson answered .
 `` If what she says is corroborated , I do not think she or her husband has much to fear .
-But what I ca n't make head or tail of , Mr. Holmes , is how on earth YOU got yourself mixed up in the matter . ''
+But what I ca not make head or tail of , Mr. Holmes , is how on earth YOU got yourself mixed up in the matter . ''
 `` Education , Gregson , education .
 Still seeking knowledge at the old university .
 Well , Watson , you have one more specimen of the tragic and grotesque to add to your collection .

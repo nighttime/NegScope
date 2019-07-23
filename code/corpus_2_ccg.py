@@ -5,6 +5,13 @@ import pdb
 import re
 
 
+def clean_lines(lines):
+	cleaned = []
+	for line in lines:
+		cleaned_line = re.sub(r'n\'t', r'not', line)
+		cleaned.append(cleaned_line)
+	return cleaned
+
 def strip_ccg_parse(line):
 	original = line
 	# in L nodes, remove the repeated category at closing
@@ -45,12 +52,14 @@ def main():
 	if args[1] == '--print-sents':
 		corpora = get_word_data()
 		folder_name = 'corpus_words'
-		assert len(args[2:]) == len(corpora)
+		fnames = ['train.txt', 'dev.txt', 'test_A.txt', 'test_B.txt']
+		assert len(fnames) == len(corpora)
 		if not os.path.exists(folder_name):
 			os.makedirs(folder_name)
-		for i,fname in enumerate(args[2:]):
+		for i,fname in enumerate(fnames):
 			lines = [' '.join(words) for words in corpora[i]]
-			write_out(lines, folder_name + '/' + fname)
+			cleaned = clean_lines(lines)
+			write_out(cleaned, folder_name + '/' + fname)
 
 	elif args[1] == '--strip-ccg':
 		infile, outfile = args[2:]

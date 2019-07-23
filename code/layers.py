@@ -1,5 +1,6 @@
 import math
 import pdb
+import traceback
 import numpy as np
 import torch
 import torch.nn as nn
@@ -201,23 +202,31 @@ class RecurrentTagger(Module):
         self.word_embedding = nn.Embedding(vocab_size, in_size - num_classes)
         self.pos_embedding = nn.Embedding(pos_vocab_size, pos_size)
         # self.bilstm = nn.LSTM(in_size, out_size, bidirectional=True)
-        self.bilstm = nn.LSTM(in_size+pos_size, out_size, bidirectional=True)
+        # self.bilstm = nn.LSTM(in_size+pos_size, out_size, bidirectional=True)
+        self.bilstm = nn.LSTM(768+num_classes+pos_size, out_size, bidirectional=True)
         self.classifier = nn.Linear(out_size*2, num_classes)
 
-    def forward(self, x, cue, pos):
-        word_emb = self.word_embedding(torch.tensor(x))
+    def forward(self, x, cue, pos, emb):
+        bsize = x.shape[0]
+        dsize = x.shape[1]
+        
+        packed_word_emb = torch.zeros(bsize, dsize, emb[0].shape[1])
+        for i in range(bsize):
+            e = torch.tensor(emb[i]).float()    
+            packed_word_emb[i,0:e.shape[0],:] += e
+        
+        # word_emb = self.word_embedding(torch.tensor(x))
         # pos_emb = make_one_hot(pos, self.pos_vocab_size)
-        pos_emb  = self.pos_embedding(torch.tensor(pos))
+        pos_emb = self.pos_embedding(torch.tensor(pos))
         cue_emb = make_one_hot(cue, self.num_classes)
 
-        lstm_input = torch.cat((word_emb, cue_emb), -1)
-        lstm_input = torch.cat((lstm_input, pos_emb), -1)
+        lstm_input = torch.cat((packed_word_emb, cue_emb, pos_emb), -1)
 
         lstm_output, _ = self.bilstm(lstm_input)
 
         # class_scores = torch.tanh(lstm_output)
         class_scores = self.classifier(lstm_output)
-        # class_scores = torch.tanh(class_scores)
+        class_scores = torch.tanh(class_scores)
 
         yhat = F.softmax(class_scores, dim=-1)
 
@@ -323,39 +332,36 @@ class RecurrentTagger(Module):
 
 
 class TreeRecurrentTagger(Module):
-    def __init__(self, hidden_size, num_classes, vocab_size, syntax_size, dropout_p=0):
+    def __init__(self, hidden_size, num_classes, vocab_size, syntax_size, use_pretrained_embs=False, dropout_p=0):
         super(TreeRecurrentTagger, self).__init__()
         self.hidden_size = hidden_size
         self.num_classes = num_classes
         self.num_syntax_labels = syntax_size
         self.hidden_syn_size = 50
+        self.use_pretrained_embs = use_pretrained_embs
 
-        self.word_embedding = nn.Embedding(vocab_size, self.hidden_size)
+        if not self.use_pretrained_embs:
+            self.word_embedding = nn.Embedding(vocab_size, self.hidden_size)
+            self.leaf2node = nn.Linear(self.hidden_size + self.hidden_syn_size + self.num_classes, self.hidden_size)
+        else:
+            self.leaf2node = nn.Linear(768 + self.hidden_syn_size + self.num_classes, self.hidden_size)
+                
         self.syn_embedding = nn.Embedding(self.num_syntax_labels, self.hidden_syn_size)
         self.drop_layer = nn.Dropout(p=dropout_p)
-        self.leaf2node = nn.Linear(self.hidden_size + self.hidden_syn_size + self.num_classes, self.hidden_size)
-        # self.leaf2node = nn.Linear(self.hidden_size + self.num_classes, self.hidden_size)
+        
         
         self.compose = nn.Linear(2*self.hidden_size + self.hidden_syn_size, self.hidden_size)
-        # self.compose2 = nn.Linear(hidden_size, hidden_size)
         self.global_reverse = nn.Linear(self.hidden_size + self.hidden_syn_size, self.hidden_size)
-        self.decompose = nn.Linear(2*self.hidden_size + self.hidden_syn_size, 2*self.hidden_size)
-        # self.decompose2 = nn.Linear(2*hidden_size, 2*hidden_size)
+        self.decompose = nn.Linear(2*self.hidden_size + 2*self.hidden_syn_size, 2*self.hidden_size)
         
         self.classifier = nn.Linear(2*self.hidden_size, self.num_classes)
 
-    def forward(self, x, word_index, cue, adj, pos):
+    def forward(self, x, word_index, cue, adj, pos, pre_embs):
         assert len(adj.shape) == 4
         bsize = x.shape[0]
         dsize = x.shape[1]
         results = torch.zeros(bsize, dsize, self.num_classes)
         x = torch.tensor(x)
-        
-        # word_emb = self.word_embedding(torch.tensor(x))
-        # cue_emb  = make_one_hot(cue, self.num_classes)
-        # pos_emb  = self.word_embedding(torch.tensor(pos))
-        # in_emb   = torch.cat((word_emb, cue_emb, pos_emb), -1)
-        # in_feats = self.leaf2node(in_emb)
 
         # for each sentence in batch
         for i in range(bsize):
@@ -366,10 +372,14 @@ class TreeRecurrentTagger(Module):
             c = cue[i][w_idx]
             p = torch.tensor(pos[i][:len(s)])
             
-            word_emb = self.word_embedding(s)
+            if self.use_pretrained_embs:
+                word_emb = torch.tensor(pre_embs[i]).float()
+            else:
+                word_emb = self.word_embedding(s)
             cue_emb  = make_one_hot(c, self.num_classes)
             # pos_emb  = make_one_hot(p, self.num_syntax_labels)
             pos_emb  = self.syn_embedding(p)
+            # pdb.set_trace()
             in_emb   = torch.cat((word_emb, cue_emb, pos_emb), -1)
             # in_emb   = torch.cat((word_emb, cue_emb), -1)
             # pdb.set_trace()
@@ -385,12 +395,12 @@ class TreeRecurrentTagger(Module):
             # root_constituent = make_one_hot(tree_tokens[0], self.num_syntax_labels)
             root_constituent = self.syn_embedding(tree_tokens[0])
             root_up_emb = torch.cat((global_up_emb, root_constituent), dim=-1)
-            # global_up_context = self.drop_layer(global_up_context)
+            # root_up_emb = self.drop_layer(root_up_emb)
             global_down_emb = torch.tanh(self.global_reverse(root_up_emb))
 
             # traverse back down the tree
             downward_results = torch.zeros(dsize, self.hidden_size)
-            self.rec_traverse_down(tree_tokens, x_emb, w_idx, A, 0, global_down_emb, downward_results, upward_results)
+            self.rec_traverse_down(tree_tokens, x_emb, pos_emb, w_idx, A, 0, global_down_emb, downward_results, upward_results)
 
             # concatenate the upward and downward results before classification
             tree_data = torch.cat((downward_results, upward_results), dim=-1)
@@ -425,33 +435,44 @@ class TreeRecurrentTagger(Module):
         parent_context = torch.cat((constituent, left, right), dim=-1)
         # parent_context = self.drop_layer(parent_context)
         parent_emb = torch.tanh(self.compose(parent_context))
-        # parent_emb  = torch.tanh(self.compose2(parent_emb))
+        # parent_emb = self.compose(parent_context)
 
         result_table[parent_idx] = parent_emb
 
         return parent_emb
 
-
-    def rec_traverse_down(self, tree_tokens, x_emb, word_index, A_p2c, parent_idx, parent_emb, result_table, upward_table):
+    def rec_traverse_down(self, tree_tokens, x_emb, pos_emb, word_index, A_p2c, parent_idx, parent_emb, result_table, upward_table):
         result_table[parent_idx] = parent_emb
         if parent_idx in word_index:
             return
 
         children_idx = np.where(A_p2c[parent_idx] == 1)[0]
         assert len(children_idx) == 2
+        l_idx, r_idx = children_idx
+        
+        def get_child_syntax(idx):
+            match = (word_index == idx).nonzero()[0].squeeze()
+            if match.size  == 1:
+                return pos_emb[match]
+            elif match.size == 0:
+                return self.syn_embedding(tree_tokens[idx])
+
+        cons_left  = get_child_syntax(l_idx)
+        cons_right = get_child_syntax(r_idx)
 
         # constituent = x_emb[parent_idx]
         # constituent = make_one_hot(tree_tokens[parent_idx], self.num_syntax_labels)
-        constituent = self.syn_embedding(tree_tokens[parent_idx])
+        # constituent = self.syn_embedding(tree_tokens[parent_idx])
 
-        parent_context = torch.cat((constituent, parent_emb, upward_table[parent_idx]), dim=-1)
+        parent_context = torch.cat((cons_left, cons_right, parent_emb, upward_table[parent_idx]), dim=-1)
         # parent_context = self.drop_layer(parent_context)
         children_emb = torch.tanh(self.decompose(parent_context))
-        # children_emb = torch.tanh(self.decompose2(children_emb))
+        # children_emb = self.decompose(parent_context)
+
         left_emb, right_emb = torch.split(children_emb, self.hidden_size, dim=-1)
         # pdb.set_trace()
-        self.rec_traverse_down(tree_tokens, x_emb, word_index, A_p2c, children_idx[0], left_emb, result_table, upward_table)
-        self.rec_traverse_down(tree_tokens, x_emb, word_index, A_p2c, children_idx[1], right_emb, result_table, upward_table)
+        self.rec_traverse_down(tree_tokens, x_emb, pos_emb, word_index, A_p2c, children_idx[0], left_emb, result_table, upward_table)
+        self.rec_traverse_down(tree_tokens, x_emb, pos_emb, word_index, A_p2c, children_idx[1], right_emb, result_table, upward_table)
 
 
 

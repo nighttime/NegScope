@@ -1,32 +1,34 @@
 from data import *
 from layers import *
+# from layers import F1_Loss
 from utils import *
+
 import pdb
 import time
 import argparse
-# import torchviz
 
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
-from layers import F1_Loss
+
+from pytorch_transformers import *
+
 
 GCN  = 0
 RNN  = 1
 TRNN = 2
 
-MODEL = TRNN
+MODEL = RNN
 
 
 if MODEL == RNN:
 	EMB_FEATURES = 200
 	POS_EMB_FEATURES = 32
 	HIDDEN_UNITS = 200
-	GCN_LAYERS = 12
 	NUM_CLASSES = 2
 
-	EPOCHS = 15
-	LR = 0.001
+	EPOCHS = 60
+	LR = 0.0001
 	BATCH_SIZE = 30
 
 	WEIGHT_DECAY = 5e-4
@@ -35,18 +37,19 @@ if MODEL == RNN:
 elif MODEL in (GCN, TRNN):
 	EMB_FEATURES = 128
 	POS_EMB_FEATURES = 16
-	HIDDEN_UNITS = 150 #150
+	HIDDEN_UNITS = 200 #150
 	GCN_LAYERS = 12
 	NUM_CLASSES = 2
 
-	EPOCHS = 40
-	LR = 0.01 #0.001 is good!
+	EPOCHS = 50
+	LR = 0.0001 #0.001 is good!
 	BATCH_SIZE = 30
 
 	WEIGHT_DECAY = 0
 	DROPOUT_P = 0
-	LR_PATIENCE = 10
-	ES_PATIENCE = 2 * LR_PATIENCE
+
+LR_PATIENCE = 10
+ES_PATIENCE = 2 * LR_PATIENCE
 
 
 
@@ -60,9 +63,9 @@ def build_recurrent_model(vocab_size, pos_size):
 	model = RecurrentTagger(EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab_size, POS_EMB_FEATURES, pos_size)
 	return model
 
-def build_tree_recurrent_model(vocab_size, syntax_size):
+def build_tree_recurrent_model(vocab_size, syntax_size, pretrained_embs):
 	print(Color.BOLD + 'TRNN MODEL' + Color.ENDC)
-	model = TreeRecurrentTagger(HIDDEN_UNITS, NUM_CLASSES, vocab_size, syntax_size, dropout_p=DROPOUT_P)
+	model = TreeRecurrentTagger(HIDDEN_UNITS, NUM_CLASSES, vocab_size, syntax_size, pretrained_embs, dropout_p=DROPOUT_P)
 	return model
 
 def decode(inds, ind2word):
@@ -111,7 +114,7 @@ def print_batch(tokens, ind2word, word_index=None, cue=None, scope=None, pos=Non
 def run_model(model, train, dev, test, ind2word, ind2syn):
 	optimizer = optim.Adam(model.parameters(), lr=LR, weight_decay=WEIGHT_DECAY)
 	scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=LR_PATIENCE, verbose=True)
-	A, ts, pos, word_index, cue, scope = train
+	A, ts, pos, word_index, cue, scope, embs = train
 	datalen = A.shape[0]
 	f1_loss = F1_Loss()
 
@@ -139,6 +142,10 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 			batch_word_index = word_index[batch_slice]
 			batch_cue        = cue[batch_slice]
 			batch_scope      = scope[batch_slice]
+			if embs is not None:
+				batch_embs   = embs[batch_slice]
+			else:
+				embs = None
 
 			if MODEL == RNN:
 				w_index = None
@@ -155,11 +162,11 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 			optimizer.zero_grad()
 
 			if MODEL == RNN:
-				batch_output = model(batch_ts, batch_cue, batch_pos)
+				batch_output = model(batch_ts, batch_cue, batch_pos, batch_embs)
 			elif MODEL == GCN:
 				batch_output = model(batch_ts, batch_cue, batch_A)
 			elif MODEL == TRNN:
-				batch_output = model(batch_ts, batch_word_index, batch_cue, batch_A, batch_pos)
+				batch_output = model(batch_ts, batch_word_index, batch_cue, batch_A, batch_pos, batch_embs)
 			
 			loss, acc, f1, batch_actual = assess_batch(batch_output, batch_scope, batch_word_index, f1_loss, seq_lens)
 
@@ -212,7 +219,7 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 
 def pack_input_data_inplace(ts, cue, word_index):
 	seq_lens = []
-	for j in range(test_ts.shape[0]):
+	for j in range(ts.shape[0]):
 		new_ts  = ts[j,word_index[j]]
 		new_cue = cue[j,word_index[j]]
 		new_len = new_ts.shape[-1]
@@ -226,7 +233,7 @@ def pack_input_data_inplace(ts, cue, word_index):
 def test_dataset(model, dataset, loss_criterion):
 	model.eval()
 	# Unpack dev set data
-	test_A, test_ts, test_pos, test_word_index, test_cue, test_scope = dataset
+	test_A, test_ts, test_pos, test_word_index, test_cue, test_scope, test_emb = dataset
 	seq_lens = None
 
 	# Pack data, removing tree structure
@@ -237,9 +244,9 @@ def test_dataset(model, dataset, loss_criterion):
 	if MODEL == GCN:
 		test_output = model(test_ts, test_cue, test_A)
 	elif MODEL == RNN:
-		test_output = model(test_ts, test_cue, test_pos)
+		test_output = model(test_ts, test_cue, test_pos, test_emb)
 	elif MODEL == TRNN:
-		test_output = model(test_ts, test_word_index, test_cue, test_A, test_pos)
+		test_output = model(test_ts, test_word_index, test_cue, test_A, test_pos, test_emb)
 	
 	# Count metrics
 	return assess_batch(test_output, test_scope, test_word_index, loss_criterion, seq_lens=seq_lens)
@@ -313,6 +320,11 @@ def f1_score(actual, expected):
     return F1.mean(), precision, recall
 
 
+class EmbeddingModel:
+	def __init__(self, model, tokenizer):
+		self.model = model
+		self.tokenizer = tokenizer
+
 def main():
 	# parser = argparse.ArgumentParser()
 	# parser.add_argument('--syntax', type=str)
@@ -326,23 +338,41 @@ def main():
 	row_normalize = False
 	pos_from_syntax=True
 	condense_trees = True
+	pretrained_embs = True
 
 	# Retrieve data
-	corpora, word2ind, syn2ind = get_parse_data(
+	corpora, word2ind, syn2ind, full_vocab = get_parse_data(
 		only_negations=True, 
 		external_syntax_folder=syntax_folder,
 		derive_pos_from_syntax=pos_from_syntax,
 		condense_single_branches=condense_trees)
 
-	# pdb.set_trace()
-	# corpora[0] = [x for x in corpora[0] if x.longest_syntactic_path() <= 7]
-	# print('GCN_LAYERS', GCN_LAYERS)
-	# print('all single branches are attached to leaves i guess')
-	# exit(0)
-	print('num sents', len(corpora[0]))
-	train, dev, test = format_data(corpora, word2ind, syn2ind, directional=directional, row_normalize=row_normalize)
 	ind2word = {v:k for k,v in word2ind.items()}
 	ind2syn  = {v:k for k,v in syn2ind.items()}
+
+	# corpora[0] = [x for x in corpora[0] if x.longest_syntactic_path() <= 7]
+	# print('num sents', len(corpora[0]))
+	a = [s for s in corpora[0] if any("'" in w for w in s.words if w != "''")]
+	# pdb.set_trace()
+
+	pre_embs = None
+	if pretrained_embs:
+		v = list(full_vocab)
+		pretrained_weights = 'bert-base-uncased'
+		bert_model = BertModel.from_pretrained(pretrained_weights, output_hidden_states=True)
+		# bert_model = BertForTokenClassification.from_pretrained(pretrained_weights, output_hidden_states=True)
+		bert_tokenizer = BertTokenizer.from_pretrained(pretrained_weights, never_split=v, do_basic_tokenize=False)
+		pre_embs = EmbeddingModel(bert_model, bert_tokenizer)
+		# pdb.set_trace()
+
+	train, dev, test = format_data(
+		corpora, 
+		word2ind, 
+		syn2ind, 
+		directional=directional, 
+		row_normalize=row_normalize, 
+		pretrained_embs_model=pre_embs)
+	
 
 	# for c in corpora:
 	# 	lengths = [t.longest_syntactic_path() for t in c]
@@ -371,8 +401,8 @@ def main():
 	elif MODEL == RNN:
 		model = build_recurrent_model(len(word2ind), len(syn2ind))
 	elif MODEL == TRNN:
-		model = build_tree_recurrent_model(len(word2ind), len(syn2ind))
-
+		model = build_tree_recurrent_model(len(word2ind), len(syn2ind), pretrained_embs)
+	# pdb.set_trace()
 	# Train and Test model
 	run_model(model, train, dev, test, ind2word, ind2syn)
 

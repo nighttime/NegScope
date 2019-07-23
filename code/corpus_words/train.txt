@@ -95,7 +95,7 @@ Now he halted in the recess of the window .
 There was such a ring of conviction in his voice that I glanced up in surprise .
 `` My dear fellow , how can you possibly be so sure of that ? ''
 `` For the very simple reason that I see the dog himself on our very door-step , and there is the ring of its owner .
-Do n't move , I beg you , Watson .
+Do not move , I beg you , Watson .
 He is a professional brother of yours , and your presence may be of assistance to me .
 Now is the dramatic moment of fate , Watson , when you hear a step upon the stair which is walking into your life , and you know not whether for good or ill .
 What does Dr. James Mortimer , the man of science , ask of Sherlock Holmes , the specialist in crime ?
@@ -329,7 +329,7 @@ Holmes leaned forward in his excitement and his eyes had the hard , dry glitter 
 `` What was the use ? ''
 `` How was it that no one else saw it ? ''
 `` The marks were some twenty yards from the body and no one gave them a thought .
-I do n't suppose I should have done so had I not known this legend . ''
+I do not suppose I should have done so had I not known this legend . ''
 `` There are many sheep-dogs on the moor ? ''
 `` No doubt , but this was no sheep-dog . ''
 `` You say it was large ? ''
@@ -532,7 +532,7 @@ There are two questions waiting for us at the outset .
 The one is whether any crime has been committed at all ; the second is , what is the crime and how was it committed ?
 Of course , if Dr. Mortimer 's surmise should be correct , and we are dealing with forces outside the ordinary laws of Nature , there is an end of our investigation .
 But we are bound to exhaust all other hypotheses before falling back upon this one .
-I think we 'll shut that window again , if you do n't mind .
+I think we 'll shut that window again , if you do not mind .
 It is a singular thing , but I find that a concentrated atmosphere helps a concentration of thought .
 I have not pushed it to the length of getting into a box to think , but that is the logical outcome of my convictions .
 Have you turned the case over in your mind ? ''
@@ -615,17 +615,17 @@ He glanced swiftly over it , running his eyes up and down the columns .
 Permit me to give you an extract from it .
 ` You may be cajoled into imagining that your own special trade or your own industry will be encouraged by a protective tariff , but it stands to reason that such legislation must in the long run keep away wealth from the country , diminish the value of our imports , and lower the general conditions of life in this island . '
 `` What do you think of that , Watson ? '' cried Holmes in high glee , rubbing his hands together with satisfaction .
-`` Do n't you think that is an admirable sentiment ? ''
+`` Do not you think that is an admirable sentiment ? ''
 Dr. Mortimer looked at Holmes with an air of professional interest , and Sir Henry Baskerville turned a pair of puzzled dark eyes upon me .
-`` I do n't know much about the tariff and things of that kind , '' said he , `` but it seems to me we 've got a bit off the trail so far as that note is concerned . ''
+`` I do not know much about the tariff and things of that kind , '' said he , `` but it seems to me we 've got a bit off the trail so far as that note is concerned . ''
 `` On the contrary , I think we are particularly hot upon the trail , Sir Henry .
 Watson here knows more about my methods than you do , but I fear that even he has not quite grasped the significance of this sentence . ''
 `` No , I confess that I see no connection . ''
 `` And yet , my dear Watson , there is so very close a connection that the one is extracted out of the other .
 ` You , ' ` your , ' ` your , ' ` life , ' ` reason , ' ` value , ' ` keep away , ' ` from the . '
-Do n't you see now whence these words have been taken ? ''
+Do not you see now whence these words have been taken ? ''
 `` By thunder , you 're right !
-Well , if that is n't smart ! '' cried Sir Henry .
+Well , if that is not smart ! '' cried Sir Henry .
 `` If any possible doubt remained it is settled by the fact that ` keep away ' and ` from the ' are cut out in one piece . ''
 `` Well , now -- so it is ! ''
 `` Really , Mr. Holmes , this exceeds anything which I could have imagined , '' said Dr. Mortimer , gazing at my friend in amazement .
@@ -692,7 +692,7 @@ You have nothing else to report to us before we go into this matter ? ''
 `` Well , it depends upon what you think worth reporting . ''
 `` I think anything out of the ordinary routine of life well worth reporting . ''
 Sir Henry smiled .
-`` I do n't know much of British life yet , for I have spent nearly all my time in the States and in Canada .
+`` I do not know much of British life yet , for I have spent nearly all my time in the States and in Canada .
 But I hope that to lose one of your boots is not part of the ordinary routine of life over here . ''
 `` You have lost one of your boots ? ''
 `` My dear sir , '' cried Dr. Mortimer , `` it is only mislaid .
@@ -724,8 +724,8 @@ Sir Henry Baskerville listened with the deepest attention and with an occasional
 `` Well , I seem to have come into an inheritance with a vengeance , '' said he when the long narrative was finished .
 `` Of course , I 've heard of the hound ever since I was in the nursery .
 It 's the pet story of the family , though I never thought of taking it seriously before .
-But as to my uncle 's death -- well , it all seems boiling up in my head , and I ca n't get it clear yet .
-You do n't seem quite to have made up your mind whether it 's a case for a policeman or a clergyman . ''
+But as to my uncle 's death -- well , it all seems boiling up in my head , and I ca not get it clear yet .
+You do not seem quite to have made up your mind whether it 's a case for a policeman or a clergyman . ''
 `` Precisely . ''
 `` And now there 's this affair of the letter to me at the hotel .
 I suppose that fits into its place . ''
@@ -888,19 +888,19 @@ His face was flushed with anger , and he held an old and dusty boot in one of hi
 So furious was he that he was hardly articulate , and when he did speak it was in a much broader and more Western dialect than any which we had heard from him in the morning .
 `` Seems to me they are playing me for a sucker in this hotel , '' he cried .
 `` They 'll find they 've started in to monkey with the wrong man unless they are careful .
-By thunder , if that chap ca n't find my missing boot there will be trouble .
+By thunder , if that chap ca not find my missing boot there will be trouble .
 I can take a joke with the best , Mr. Holmes , but they 've got a bit over the mark this time . ''
 `` Still looking for your boot ? ''
 `` Yes , sir , and mean to find it . ''
 `` But , surely , you said that it was a new brown boot ? ''
 `` So it was , sir .
 And now it 's an old black one . ''
-`` What ! you do n't mean to say -- ? ''
+`` What ! you do not mean to say -- ? ''
 `` That 's just what I do mean to say .
 I only had three pairs in the world -- the new brown , the old black , and the patent leathers , which I am wearing .
 Last night they took one of my brown ones , and today they have sneaked one of the black .
 Well , have you got it ?
-Speak out , man , and do n't stand staring ! ''
+Speak out , man , and do not stand staring ! ''
 An agitated German waiter had appeared upon the scene .
 `` No , sir ; I have made inquiry all over the hotel , but I can hear no word of it . ''
 `` Well , either that boot comes back before sundown or I 'll see the manager and tell him that I go right straight out of this hotel . ''
@@ -910,11 +910,11 @@ Well , well , Mr. Holmes , you 'll excuse my troubling you about such a trifle -
 `` I think it 's well worth troubling about . ''
 `` Why , you look very serious over it . ''
 `` How do you explain it ? ''
-`` I just do n't attempt to explain it .
+`` I just do not attempt to explain it .
 It seems the very maddest , queerest thing that ever happened to me . ''
 `` The queerest perhaps -- '' said Holmes thoughtfully .
 `` What do you make of it yourself ? ''
-`` Well , I do n't profess to understand it yet .
+`` Well , I do not profess to understand it yet .
 This case of yours is very complex , Sir Henry .
 When taken in conjunction with your uncle 's death I am not sure that of all the five hundred cases of capital importance which I have handled there is one which cuts so deep .
 But we hold several threads in our hands , and the odds are that one or other of them guides us to the truth .
@@ -1096,7 +1096,7 @@ I was glad enough to agree .
 First we drove down to the Northumberland Hotel and waited there until two gentlemen came out and took a cab from the rank .
 We followed their cab until it pulled up somewhere near here . ''
 `` This very door , '' said Holmes .
-`` Well , I could n't be sure of that , but I dare say my fare knew all about it .
+`` Well , I could not be sure of that , but I dare say my fare knew all about it .
 We pulled up halfway down the street and waited an hour and a half .
 Then the two gentlemen passed us , walking , and we followed down Baker Street and along -- ''
 `` I know , '' said Holmes .
@@ -1111,12 +1111,12 @@ And you saw no more of him ? ''
 `` Not after he went into the station . ''
 `` And how would you describe Mr. Sherlock Holmes ? ''
 The cabman scratched his head .
-`` Well , he was n't altogether such an easy gentleman to describe .
+`` Well , he was not altogether such an easy gentleman to describe .
 I 'd put him at forty years of age , and he was of a middle height , two or three inches shorter than you , sir .
 He was dressed like a toff , and he had a black beard , cut square at the end , and a pale face .
-I do n't know as I could say more than that . ''
+I do not know as I could say more than that . ''
 `` Colour of his eyes ? ''
-`` No , I ca n't say that . ''
+`` No , I ca not say that . ''
 `` Nothing more that you can remember ? ''
 `` No , sir ; nothing . ''
 `` Well , then , here is your half-sovereign .
@@ -1221,10 +1221,10 @@ He was watching the road along which we travelled .
 Our driver half turned in his seat .
 `` There 's a convict escaped from Princetown , sir .
 He 's been out three days now , and the warders watch every road and every station , but they 've had no sight of him yet .
-The farmers about here do n't like it , sir , and that 's a fact . ''
+The farmers about here do not like it , sir , and that 's a fact . ''
 `` Well , I understand that they get five pounds if they can give information . ''
 `` Yes , sir , but the chance of five pounds is but a poor thing compared to the chance of having your throat cut .
-You see , it is n't like any ordinary convict .
+You see , it is not like any ordinary convict .
 This is a man that would stick at nothing . ''
 `` Who is he , then ? ''
 `` It is Selden , the Notting Hill murderer . ''
@@ -1253,7 +1253,7 @@ Baskerville shuddered as he looked up the long , dark drive to where the house g
 The young heir glanced round with a gloomy face .
 `` It 's no wonder my uncle felt as if trouble were coming on him in such a place as this , '' said he .
 `` It 's enough to scare any man .
-I 'll have a row of electric lamps up here inside of six months , and you wo n't know it again , with a thousand candle-power Swan and Edison right here in front of the hall door . ''
+I 'll have a row of electric lamps up here inside of six months , and you wo not know it again , with a thousand candle-power Swan and Edison right here in front of the hall door . ''
 The avenue opened into a broad expanse of turf , and the house lay before us .
 In the fading light I could see that the centre was a heavy block of building from which a porch projected .
 The whole front was draped in ivy , with a patch clipped bare here and there where a window or a coat of arms broke through the dark veil .
@@ -1265,7 +1265,7 @@ Welcome to Baskerville Hall ! ''
 A tall man had stepped from the shadow of the porch to open the door of the wagonette .
 The figure of a woman was silhouetted against the yellow light of the hall .
 She came out and helped the man to hand down our bags .
-`` You do n't mind my driving straight home , Sir Henry ? '' said Dr. Mortimer .
+`` You do not mind my driving straight home , Sir Henry ? '' said Dr. Mortimer .
 `` My wife is expecting me . ''
 `` Surely you will stay and have some dinner ? ''
 `` No , I must go .
@@ -1317,9 +1317,9 @@ Black beams shot across above our heads , with a smoke-darkened ceiling beyond t
 With rows of flaring torches to light it up , and the colour and rude hilarity of an old-time banquet , it might have softened ; but now , when two black-clothed gentlemen sat in the little circle of light thrown by a shaded lamp , one 's voice became hushed and one 's spirit subdued .
 A dim line of ancestors , in every variety of dress , from the Elizabethan knight to the buck of the Regency , stared down upon us and daunted us by their silent company .
 We talked little , and I for one was glad when the meal was over and we were able to retire into the modern billiard-room and smoke a cigarette .
-`` My word , it is n't a very cheerful place , '' said Sir Henry .
+`` My word , it is not a very cheerful place , '' said Sir Henry .
 `` I suppose one can tone down to it , but I feel a bit out of the picture at present .
-I do n't wonder that my uncle got a little jumpy if he lived all alone in such a house as this .
+I do not wonder that my uncle got a little jumpy if he lived all alone in such a house as this .
 However , if it suits you , we will retire early tonight , and perhaps things may seem more cheerful in the morning . ''
 I drew aside my curtains before I went to bed and looked out from my window .
 It opened upon the grassy space which lay in front of the hall door .
@@ -1380,9 +1380,9 @@ James , you delivered that telegram to Mr. Barrymore at the Hall last week , did
 `` Well , he was up in the loft at the time , so that I could not put it into his own hands , but I gave it into Mrs. Barrymore 's hands , and she promised to deliver it at once . ''
 `` Did you see Mr. Barrymore ? ''
 `` No , sir ; I tell you he was in the loft . ''
-`` If you did n't see him , how do you know he was in the loft ? ''
+`` If you did not see him , how do you know he was in the loft ? ''
 `` Well , surely his own wife ought to know where he is , '' said the postmaster testily .
-`` Did n't he get the telegram ?
+`` Did not he get the telegram ?
 If there is any mistake it is for Mr. Barrymore himself to complain . ''
 It seemed hopeless to pursue the inquiry any farther , but it was clear that in spite of Holmes 's ruse we had no proof that Barrymore had not been in London all the time .
 Suppose that it were so -- suppose that the same man had been the last who had seen Sir Charles alive , and the first to dog the new heir when he returned to England .
@@ -1516,7 +1516,7 @@ I 've heard it once or twice before , but never quite so loud . ''
 I looked round , with a chill of fear in my heart , at the huge swelling plain , mottled with the green patches of rushes .
 Nothing stirred over the vast expanse save a pair of ravens , which croaked loudly from a tor behind us .
 `` You are an educated man .
-You do n't believe such nonsense as that ? '' said I .
+You do not believe such nonsense as that ? '' said I .
 `` What do you think is the cause of so strange a sound ? ''
 `` Bogs make queer noises sometimes .
 It 's the mud settling , or the water rising , or something . ''
@@ -1639,7 +1639,7 @@ Her face was beautifully flushed with her exertions and she held her hand to her
 I must not stop , or my brother may miss me .
 I wanted to say to you how sorry I am about the stupid mistake I made in thinking that you were Sir Henry .
 Please forget the words I said , which have no application whatever to you . ''
-`` But I ca n't forget them , Miss Stapleton , '' said I .
+`` But I ca not forget them , Miss Stapleton , '' said I .
 `` I am Sir Henry 's friend , and his welfare is a very close concern of mine .
 Tell me why it was that you were so eager that Sir Henry should return to London . ''
 `` A woman 's whim , Dr. Watson .
@@ -1901,7 +1901,7 @@ I ran down the hill therefore and met the baronet at the bottom .
 His face was flushed with anger and his brows were wrinkled , like one who is at his wit 's ends what to do .
 `` Halloa , Watson !
 Where have you dropped from ? '' said he .
-`` You do n't mean to say that you came after me in spite of all ? ''
+`` You do not mean to say that you came after me in spite of all ? ''
 I explained everything to him : how I had found it impossible to remain behind , how I had followed him , and how I had witnessed all that had occurred .
 For an instant his eyes blazed at me , but my frankness disarmed his anger , and he broke at last into a rather rueful laugh .
 `` You would have thought the middle of that prairie a fairly safe place for a man to be private , '' said he , `` but , by thunder , the whole countryside seems to have been out to see me do my wooing -- and a mighty poor wooing at that !
@@ -1912,7 +1912,7 @@ But her brother was well up to the front .
 Did you see him come out on us ? ''
 `` Yes , I did . ''
 `` Did he ever strike you as being crazy -- this brother of hers ? ''
-`` I ca n't say that he ever did . ''
+`` I ca not say that he ever did . ''
 `` I dare say not .
 I always thought him sane enough until today , but you can take it from me that either he or I ought to be in a straitjacket .
 What 's the matter with me , anyhow ?
@@ -1920,7 +1920,7 @@ You 've lived near me for some weeks , Watson .
 Tell me straight , now !
 Is there anything that would prevent me from making a good husband to a woman that I loved ? ''
 `` I should say not . ''
-`` He ca n't object to my worldly position , so it must be myself that he has this down on .
+`` He ca not object to my worldly position , so it must be myself that he has this down on .
 What has he against me ?
 I never hurt man or woman in my life that I know of .
 And yet he would not so much as let me touch the tips of her fingers . ''
@@ -1929,7 +1929,7 @@ And yet he would not so much as let me touch the tips of her fingers . ''
 I tell you , Watson , I 've only known her these few weeks , but from the first I just felt that she was made for me , and she , too -- she was happy when she was with me , and that I 'll swear .
 There 's a light in a woman 's eyes that speaks louder than words .
 But he has never let us get together and it was only today for the first time that I saw a chance of having a few words with her alone .
-She was glad to meet me , but when she did it was not love that she would talk about , and she would n't have let me talk about it either if she could have stopped it .
+She was glad to meet me , but when she did it was not love that she would talk about , and she would not have let me talk about it either if she could have stopped it .
 She kept coming back to it that this was a place of danger , and that she would never be happy until I had left it .
 I told her that since I had seen her I was in no hurry to leave it , and that if she really wanted me to go , the only way to work it was for her to arrange to go with me .
 With that I offered in as many words to marry her , but before she could answer , down came this brother of hers , running at us with a face on him like a madman .
@@ -1947,7 +1947,7 @@ Our friend 's title , his fortune , his age , his character , and his appearance
 That his advances should be rejected so brusquely without any reference to the lady 's own wishes and that the lady should accept the situation without protest is very amazing .
 However , our conjectures were set at rest by a visit from Stapleton himself that very afternoon .
 He had come to offer apologies for his rudeness of the morning , and after a long private interview with Sir Henry in his study the upshot of their conversation was that the breach is quite healed , and that we are to dine at Merripit House next Friday as a sign of it .
-`` I do n't say now that he is n't a crazy man , '' said Sir Henry ; `` I ca n't forget the look in his eyes when he ran at me this morning , but I must allow that no man could make a more handsome apology than he has done . ''
+`` I do not say now that he is not a crazy man , '' said Sir Henry ; `` I ca not forget the look in his eyes when he ran at me this morning , but I must allow that no man could make a more handsome apology than he has done . ''
 `` Did he give any explanation of his conduct ? ''
 `` His sister is everything in his life , he says .
 That is natural enough , and I am glad that he should understand her value .
@@ -2001,7 +2001,7 @@ The fellow looked at us in a helpless way , and he wrung his hands together like
 `` I was doing no harm , sir .
 I was holding a candle to the window . ''
 `` And why were you holding a candle to the window ? ''
-`` Do n't ask me , Sir Henry -- do n't ask me !
+`` Do not ask me , Sir Henry -- do not ask me !
 I give you my word , sir , that it is not my secret , and that I can not tell it .
 If it concerned no one but myself I would not try to keep it from you . ''
 A sudden idea occurred to me , and I took the candle from the trembling hand of the butler .
@@ -2106,7 +2106,7 @@ It came with the wind through the silence of the night , a long , deep mutter , 
 Again and again it sounded , the whole air throbbing with it , strident , wild , and menacing .
 The baronet caught my sleeve and his face glimmered white through the darkness .
 `` My God , what 's that , Watson ? ''
-`` I do n't know .
+`` I do not know .
 It 's a sound they have on the moor .
 I heard it once before . ''
 It died away , and an absolute silence closed in upon us .
@@ -2126,10 +2126,10 @@ He groaned and was silent for a few moments .
 `` A hound it was , '' he said at last , `` but it seemed to come from miles away , over yonder , I think . ''
 `` It was hard to say whence it came . ''
 `` It rose and fell with the wind .
-Is n't that the direction of the great Grimpen Mire ? ''
+Is not that the direction of the great Grimpen Mire ? ''
 `` Yes , it is . ''
 `` Well , it was up there .
-Come now , Watson , did n't you think yourself that it was the cry of a hound ?
+Come now , Watson , did not you think yourself that it was the cry of a hound ?
 I am not a child .
 You need not fear to speak the truth . ''
 `` Stapleton was with me when I heard it last .
@@ -2137,17 +2137,17 @@ He said that it might be the calling of a strange bird . ''
 `` No , no , it was a hound .
 My God , can there be some truth in all these stories ?
 Is it possible that I am really in danger from so dark a cause ?
-You do n't believe it , do you , Watson ? ''
+You do not believe it , do you , Watson ? ''
 `` No , no . ''
 `` And yet it was one thing to laugh about it in London , and it is another to stand out here in the darkness of the moor and to hear such a cry as that .
 And my uncle !
 There was the footprint of the hound beside him as he lay .
 It all fits together .
-I do n't think that I am a coward , Watson , but that sound seemed to freeze my very blood .
+I do not think that I am a coward , Watson , but that sound seemed to freeze my very blood .
 Feel my hand ! ''
 It was as cold as a block of marble .
 `` You 'll be all right tomorrow . ''
-`` I do n't think I 'll get that cry out of my head .
+`` I do not think I 'll get that cry out of my head .
 What do you advise that we do now ? ''
 `` Shall we turn back ? ''
 `` No , by thunder ; we have come out to get our man , and we will do it .
@@ -2263,7 +2263,7 @@ The butler was standing very pale but very collected before us .
 At the same time , I was very much surprised when I heard you two gentlemen come back this morning and learned that you had been chasing Selden .
 The poor fellow has enough to fight against without my putting more upon his track . ''
 `` If you had told us of your own free will it would have been a different thing , '' said the baronet , `` you only told us , or rather your wife only told us , when it was forced from you and you could not help yourself . ''
-`` I did n't think you would have taken advantage of it , Sir Henry -- indeed I did n't . ''
+`` I did not think you would have taken advantage of it , Sir Henry -- indeed I did not . ''
 `` The man is a public danger .
 There are lonely houses scattered over the moor , and he is a fellow who would stick at nothing .
 You only want to get a glimpse of his face to see that .
@@ -2275,7 +2275,7 @@ But he will never trouble anyone in this country again .
 I assure you , Sir Henry , that in a very few days the necessary arrangements will have been made and he will be on his way to South America .
 For God 's sake , sir , I beg of you not to let the police know that he is still on the moor .
 They have given up the chase there , and he can lie quiet until the ship is ready for him .
-You ca n't tell on him without getting my wife and me into trouble .
+You ca not tell on him without getting my wife and me into trouble .
 I beg you , sir , to say nothing to the police . ''
 `` What do you say , Watson ? ''
 I shrugged my shoulders .
@@ -2289,7 +2289,7 @@ To commit a crime would be to show where he was hiding . ''
 `` God bless you , sir , and thank you from my heart !
 It would have killed my poor wife had he been taken again . ''
 `` I guess we are aiding and abetting a felony , Watson ?
-But , after what we have heard I do n't feel as if I could give the man up , so there is an end of it .
+But , after what we have heard I do not feel as if I could give the man up , so there is an end of it .
 All right , Barrymore , you can go . ''
 With a few broken words of gratitude the man turned , but he hesitated and then came back .
 `` You 've been so kind to us , sir , that I should like to do the best I can for you in return .
@@ -2298,7 +2298,7 @@ I 've never breathed a word about it yet to mortal man .
 It 's about poor Sir Charles 's death . ''
 The baronet and I were both upon our feet .
 `` Do you know how he died ? ''
-`` No , sir , I do n't know that . ''
+`` No , sir , I do not know that . ''
 `` What then ? ''
 `` I know why he was at the gate at that hour .
 It was to meet a woman . ''
@@ -2306,7 +2306,7 @@ It was to meet a woman . ''
 He ? ''
 `` Yes , sir . ''
 `` And the woman 's name ? ''
-`` I ca n't give you the name , sir , but I can give you the initials .
+`` I ca not give you the name , sir , but I can give you the initials .
 Her initials were L. L . ''
 `` How do you know this , Barrymore ? ''
 `` Well , Sir Henry , your uncle had a letter that morning .
@@ -2331,7 +2331,7 @@ But I expect if we could lay our hands upon that lady we should know more about 
 `` I can not understand , Barrymore , how you came to conceal this important information . ''
 `` Well , sir , it was immediately after that our own trouble came to us .
 And then again , sir , we were both of us very fond of Sir Charles , as we well might be considering all that he has done for us .
-To rake this up could n't help our poor master , and it 's well to go carefully when there 's a lady in the case .
+To rake this up could not help our poor master , and it 's well to go carefully when there 's a lady in the case .
 Even the best of us -- ''
 `` You thought it might injure his reputation ? ''
 `` Well , sir , I thought no good could come of it .
@@ -2378,7 +2378,7 @@ I gave him such consolation as I might , but I thought of the pony on the Grimpe
 `` Can you , then , tell me the name of any woman whose initials are L. L. ? ''
 He thought for a few minutes .
 `` No , '' said he .
-`` There are a few gipsies and labouring folk for whom I ca n't answer , but among the farmers or gentry there is no one whose initials are those .
+`` There are a few gipsies and labouring folk for whom I ca not answer , but among the farmers or gentry there is no one whose initials are those .
 Wait a bit though , '' he added after a pause .
 `` There is Laura Lyons -- her initials are L. L. -- but she lives in Coombe Tracey . ''
 `` Who is she ? '' I asked .
@@ -2407,7 +2407,7 @@ This was my conversation with Barrymore just now , which gives me one more stron
 Mortimer had stayed to dinner , and he and the baronet played ecarte afterwards .
 The butler brought me my coffee into the library , and I took the chance to ask him a few questions .
 `` Well , '' said I , `` has this precious relation of yours departed , or is he still lurking out yonder ? ''
-`` I do n't know , sir .
+`` I do not know , sir .
 I hope to heaven that he has gone , for he has brought nothing but trouble here !
 I 've not heard of him since I left out food for him last , and that was three days ago . ''
 `` Did you see him then ? ''
@@ -2422,12 +2422,12 @@ I sat with my coffee-cup halfway to my lips and stared at Barrymore .
 `` How do you know of him then ? ''
 `` Selden told me of him , sir , a week ago or more .
 He 's in hiding , too , but he 's not a convict as far as I can make out .
-I do n't like it , Dr. Watson -- I tell you straight , sir , that I do n't like it . ''
+I do not like it , Dr. Watson -- I tell you straight , sir , that I do not like it . ''
 He spoke with a sudden passion of earnestness .
 `` Now , listen to me , Barrymore !
 I have no interest in this matter but that of your master .
 I have come here with no object except to help him .
-Tell me , frankly , what it is that you do n't like . ''
+Tell me , frankly , what it is that you do not like . ''
 Barrymore hesitated for a moment , as if he regretted his outburst or found it difficult to express his own feelings in words .
 `` It 's all these goings-on , sir , '' he cried at last , waving his hand towards the rain-lashed window which faced the moor .
 `` There 's foul play somewhere , and there 's black villainy brewing , to that I 'll swear !
@@ -2620,7 +2620,7 @@ We 'll teach these magnates that they can not ride roughshod over the rights of 
 And I 've closed the wood where the Fernworthy folk used to picnic .
 These infernal people seem to think that there are no rights of property , and that they can swarm where they like with their papers and their bottles .
 Both cases decided , Dr. Watson , and both in my favour .
-I have n't had such a day since I had Sir John Morland for trespass because he shot in his own warren . ''
+I have not had such a day since I had Sir John Morland for trespass because he shot in his own warren . ''
 `` How on earth did you do that ? ''
 `` Look it up in the books , sir .
 It will repay reading -- Frankland v. Morland , Court of Queen 's Bench .
@@ -2643,7 +2643,7 @@ I had seen enough of the contrary nature of the old sinner to understand that an
 `` Ha , ha , my boy , a very much more important matter than that !
 What about the convict on the moor ? ''
 I stared .
-`` You do n't mean that you know where he is ? '' said I .
+`` You do not mean that you know where he is ? '' said I .
 `` I may not know exactly where he is , but I am quite sure that I could help the police to lay their hands on him .
 Has it never struck you that the way to catch that man was to find out where he got his food and so trace it to him ? ''
 He certainly seemed to be getting uncomfortably near the truth .
@@ -2870,7 +2870,7 @@ In that case , regarding Stapleton as an unmarried man , she counted no doubt up
 `` And when she is undeceived ? ''
 `` Why , then we may find the lady of service .
 It must be our first duty to see her -- both of us -- tomorrow .
-Do n't you think , Watson , that you are away from your charge rather long ?
+Do not you think , Watson , that you are away from your charge rather long ?
 Your place should be at Baskerville Hall . ''
 The last red streaks had faded away in the west and night had settled upon the moor .
 A few faint stars were gleaming in a violet sky .
@@ -3019,7 +3019,7 @@ He stopped when he saw us , and then came on again .
 You are the last man that I should have expected to see out on the moor at this time of night .
 But , dear me , what 's this ?
 Somebody hurt ?
-Not -- do n't tell me that it is our friend Sir Henry ! ''
+Not -- do not tell me that it is our friend Sir Henry ! ''
 He hurried past me and stooped over the dead man .
 I heard a sharp intake of his breath and the cigar fell from his fingers .
 `` Who -- who 's this ? '' he stammered .
@@ -3131,9 +3131,9 @@ To all the world he was the man of violence , half animal and half demon ; but t
 Evil indeed is the man who has not one woman to mourn him .
 `` I 've been moping in the house all day since Watson went off in the morning , '' said the baronet .
 `` I guess I should have some credit , for I have kept my promise .
-If I had n't sworn not to go about alone I might have had a more lively evening , for I had a message from Stapleton asking me over there . ''
+If I had not sworn not to go about alone I might have had a more lively evening , for I had a message from Stapleton asking me over there . ''
 `` I have no doubt that you would have had a more lively evening , '' said Holmes drily .
-`` By the way , I do n't suppose you appreciate that we have been mourning over you as having broken your neck ? ''
+`` By the way , I do not suppose you appreciate that we have been mourning over you as having broken your neck ? ''
 Sir Henry opened his eyes .
 `` How was that ? ''
 `` This poor wretch was dressed in your clothes .
@@ -3145,7 +3145,7 @@ I am not sure that as a conscientious detective my first duty is not to arrest t
 Watson 's reports are most incriminating documents . ''
 `` But how about the case ? '' asked the baronet .
 `` Have you made anything out of the tangle ?
-I do n't know that Watson and I are much the wiser since we came down . ''
+I do not know that Watson and I are much the wiser since we came down . ''
 `` I think that I shall be in a position to make the situation rather more clear to you before long .
 It has been an exceedingly difficult and most complicated business .
 There are several points upon which we still want light -- but it is coming all the same . ''
@@ -3165,11 +3165,11 @@ The lamp beat upon his face , and so intent was it and so still that it might ha
 I could see as he looked down that he was repressing some internal emotion .
 His features were still composed , but his eyes shone with amused exultation .
 `` Excuse the admiration of a connoisseur , '' said he as he waved his hand towards the line of portraits which covered the opposite wall .
-`` Watson wo n't allow that I know anything of art but that is mere jealousy because our views upon the subject differ .
+`` Watson wo not allow that I know anything of art but that is mere jealousy because our views upon the subject differ .
 Now , these are a really very fine series of portraits . ''
 `` Well , I 'm glad to hear you say so , '' said Sir Henry , glancing with some surprise at my friend .
-`` I do n't pretend to know much about these things , and I 'd be a better judge of a horse or a steer than of a picture .
-I did n't know that you found time for such things . ''
+`` I do not pretend to know much about these things , and I 'd be a better judge of a horse or a steer than of a picture .
+I did not know that you found time for such things . ''
 `` I know what is good when I see it , and I see it now .
 That 's a Kneller , I 'll swear , that lady in the blue silk over yonder , and the stout gentleman with the wig ought to be a Reynolds .
 They are all family portraits , I presume ? ''
@@ -3370,7 +3370,7 @@ I could well remember the scorn which the theories of the reasoner used then to 
 `` We have two hours before we need think of starting .
 I think we might employ it in getting some dinner and then , Lestrade , we will take the London fog out of your throat by giving you a breath of the pure night air of Dartmoor .
 Never been there ?
-Ah , well , I do n't suppose you will forget your first visit . ''
+Ah , well , I do not suppose you will forget your first visit . ''
 Chapter 14. The Hound of the Baskervilles
 One of Sherlock Holmes 's defects -- if , indeed , one may call it a defect -- was that he was exceedingly loath to communicate his full plans to any other person until the instant of their fulfilment .
 Partly it came no doubt from his own masterful nature , which loved to dominate and surprise those who were around him .
@@ -3410,7 +3410,7 @@ What are those latticed windows at this end ? ''
 `` That is certainly the dining-room . ''
 `` The blinds are up .
 You know the lie of the land best .
-Creep forward quietly and see what they are doing -- but for heaven 's sake do n't let them know that they are watched ! ''
+Creep forward quietly and see what they are doing -- but for heaven 's sake do not let them know that they are watched ! ''
 I tiptoed down the path and stooped behind the low wall which surrounded the stunted orchard .
 Creeping in its shadow I reached a point whence I could look straight through the uncurtained window .
 There were only two men in the room , Sir Henry and Stapleton .
@@ -3436,7 +3436,7 @@ Holmes 's face was turned towards it , and he muttered impatiently as he watched
 `` It 's moving towards us , Watson . ''
 `` Is that serious ? ''
 `` Very serious , indeed -- the one thing upon earth which could have disarranged my plans .
-He ca n't be very long , now .
+He ca not be very long , now .
 It is already ten o'clock .
 Our success and even his life may depend upon his coming out before the fog is over the path . ''
 The night was clear and fine above us .
@@ -3451,8 +3451,8 @@ Already the first thin wisps of it were curling across the golden square of the 
 The farther wall of the orchard was already invisible , and the trees were standing out of a swirl of white vapour .
 As we watched it the fog-wreaths came crawling round both corners of the house and rolled slowly into one dense bank on which the upper floor and the roof floated like a strange ship upon a shadowy sea .
 Holmes struck his hand passionately upon the rock in front of us and stamped his feet in his impatience .
-`` If he is n't out in a quarter of an hour the path will be covered .
-In half an hour we wo n't be able to see our hands in front of us . ''
+`` If he is not out in a quarter of an hour the path will be covered .
+In half an hour we wo not be able to see our hands in front of us . ''
 `` Shall we move farther back upon higher ground ? ''
 `` Yes , I think it would be as well . ''
 So as the fog-bank flowed onward we fell back before it until we were half a mile from the house , and still that dense white sea , with the moon silvering its upper edge , swept slowly and inexorably on .

@@ -112,7 +112,7 @@ I only kept them here until my friend , Mr. Holmes , should have seen them in yo
 `` Indeed I have , sir .
 I am a quiet woman and live a retired life .
 It is something new for me to see my name in the papers and to find the police in my house .
-I wo n't have those things in here , Mr. Lestrade .
+I wo not have those things in here , Mr. Lestrade .
 If you wish to see them you must go to the outhouse . ''
 It was a small shed in the narrow garden which ran behind the house .
 Lestrade went in and brought out a yellow cardboard box , with a piece of brown paper and some string .
@@ -211,22 +211,22 @@ I observe that she was unmarried at the time . ''
 `` That is my trade . ''
 `` Well , you are quite right .
 But she was married to Mr. Browner a few days afterwards .
-He was on the South American line when that was taken , but he was so fond of her that he could n't abide to leave her for so long , and he got into the Liverpool and London boats . ''
+He was on the South American line when that was taken , but he was so fond of her that he could not abide to leave her for so long , and he got into the Liverpool and London boats . ''
 `` Ah , the Conqueror , perhaps ? ''
 `` No , the May Day , when last I heard .
 Jim came down here to see me once .
 That was before he broke the pledge ; but afterwards he would always take drink when he was ashore , and a little drink would send him stark , staring mad .
 Ah ! it was a bad day that ever he took a glass in his hand again .
-First he dropped me , then he quarrelled with Sarah , and now that Mary has stopped writing we do n't know how things are going with them . ''
+First he dropped me , then he quarrelled with Sarah , and now that Mary has stopped writing we do not know how things are going with them . ''
 It was evident that Miss Cushing had come upon a subject on which she felt very deeply .
 Like most people who lead a lonely life , she was shy at first , but ended by becoming extremely communicative .
 She told us many details about her brother-in-law the steward , and then wandering off on the subject of her former lodgers , the medical students , she gave us a long account of their delinquencies , with their names and those of their hospitals .
 Holmes listened attentively to everything , throwing in a question from time to time .
 `` About your second sister , Sarah , '' said he .
 `` I wonder , since you are both maiden ladies , that you do not keep house together . ''
-`` Ah ! you do n't know Sarah 's temper or you would wonder no more .
+`` Ah ! you do not know Sarah 's temper or you would wonder no more .
 I tried it when I came to Croydon , and we kept on until about two months ago , when we had to part .
-I do n't want to say a word against my own sister , but she was always meddlesome and hard to please , was Sarah . ''
+I do not want to say a word against my own sister , but she was always meddlesome and hard to please , was Sarah . ''
 `` You say that she quarrelled with your Liverpool relations . ''
 `` Yes , and they were the best of friends at one time .
 Why , she went up there to live in order to be near them .
@@ -253,7 +253,7 @@ My companion ordered him to wait , and had his hand upon the knocker , when the 
 As her medical adviser , I can not possibly take the responsibility of allowing anyone to see her .
 I should recommend you to call again in ten days . ''
 He drew on his gloves , closed the door , and marched off down the street .
-`` Well , if we ca n't we ca n't , '' said Holmes , cheerfully .
+`` Well , if we ca not we ca not , '' said Holmes , cheerfully .
 `` Perhaps she could not or would not have told you much . ''
 `` I did not wish her to tell me anything .
 I only wanted to look at her .
@@ -364,15 +364,15 @@ With kind regards ,
 `` Yours very truly ,
 `` G. Lestrade .
 `` Hum !
-The investigation really was a very simple one , '' remarked Holmes , `` but I do n't think it struck him in that light when he first called us in .
+The investigation really was a very simple one , '' remarked Holmes , `` but I do not think it struck him in that light when he first called us in .
 However , let us see what Jim Browner has to say for himself .
 This is his statement as made before Inspector Montgomery at the Shadwell Police Station , and it has the advantage of being verbatim . ''
 `` ` Have I anything to say ?
 Yes , I have a deal to say .
 I have to make a clean breast of it all .
 You can hang me , or you can leave me alone .
-I do n't care a plug which you do .
-I tell you I 've not shut an eye in sleep since I did it , and I do n't believe I ever will again until I get past all waking .
+I do not care a plug which you do .
+I tell you I 've not shut an eye in sleep since I did it , and I do not believe I ever will again until I get past all waking .
 Sometimes it 's his face , but most generally it 's hers .
 I 'm never without one or the other before me .
 He looks frowning and black-like , but she has a kind o ' surprise upon her face .
@@ -399,8 +399,8 @@ I had come up from the ship and found my wife out , but Sarah at home .
 `` Where 's Mary ? '' I asked .
 `` Oh , she has gone to pay some accounts . ''
 I was impatient and paced up and down the room .
-`` Ca n't you be happy for five minutes without Mary , Jim ? '' says she .
-`` It 's a bad compliment to me that you ca n't be contented with my society for so short a time . ''
+`` Ca not you be happy for five minutes without Mary , Jim ? '' says she .
+`` It 's a bad compliment to me that you ca not be contented with my society for so short a time . ''
 `` That 's all right , my lass , '' said I , putting out my hand towards her in a kindly way , but she had it in both hers in an instant , and they burned as if they were in a fever .
 I looked into her eyes and I read it all there .
 There was no need for her to speak , nor for me either .
@@ -420,7 +420,7 @@ She had some reason to be disgusted with me now , and the gap between us began t
 And then this Alec Fairbairn chipped in , and things became a thousand times blacker .
 `` ` It was to see Sarah that he came to my house first , but soon it was to see us , for he was a man with winning ways , and he made friends wherever he went .
 He was a dashing , swaggering chap , smart and curled , who had seen half the world and could talk of what he had seen .
-He was good company , I wo n't deny it , and he had wonderful polite ways with him for a sailor man , so that I think there must have been a time when he knew more of the poop than the forecastle .
+He was good company , I wo not deny it , and he had wonderful polite ways with him for a sailor man , so that I think there must have been a time when he knew more of the poop than the forecastle .
 For a month he was in and out of my house , and never once did it cross my mind that harm might come of his soft , tricky ways .
 And then at last something made me suspect , and from that day my peace was gone forever .
 `` ` It was only a little thing , too .
@@ -430,7 +430,7 @@ That was enough for me .
 There was no one but Alec Fairbairn whose step she could have mistaken for mine .
 If I could have seen him then I should have killed him , for I have always been like a madman when my temper gets loose .
 Mary saw the devil 's light in my eyes , and she ran forward with her hands on my sleeve .
-`` Do n't , Jim , do n't ! '' says she .
+`` Do not , Jim , do not ! '' says she .
 `` Where 's Sarah ? '' I asked .
 `` In the kitchen , '' says she .
 `` Sarah , '' says I as I went in , `` this man Fairbairn is never to darken my door again . ''
@@ -439,10 +439,10 @@ Mary saw the devil 's light in my eyes , and she ran forward with her hands on m
 `` Oh ! '' says she , `` if my friends are not good enough for this house , then I am not good enough for it either . ''
 `` You can do what you like , '' says I , `` but if Fairbairn shows his face here again I 'll send you one of his ears for a keepsake . ''
 She was frightened by my face , I think , for she never answered a word , and the same evening she left my house .
-`` ` Well , I do n't know now whether it was pure devilry on the part of this woman , or whether she thought that she could turn me against my wife by encouraging her to misbehave .
+`` ` Well , I do not know now whether it was pure devilry on the part of this woman , or whether she thought that she could turn me against my wife by encouraging her to misbehave .
 Anyway , she took a house just two streets off and let lodgings to sailors .
 Fairbairn used to stay there , and Mary would go round to have tea with her sister and him .
-How often she went I do n't know , but I followed her one day , and as I broke in at the door Fairbairn got away over the back garden wall , like the cowardly skunk that he was .
+How often she went I do not know , but I followed her one day , and as I broke in at the door Fairbairn got away over the back garden wall , like the cowardly skunk that he was .
 I swore to my wife that I would kill her if I found her in his company again , and I led her back with me , sobbing and trembling , and as white as a piece of paper .
 There was no trace of love between us any longer .
 I could see that she hated me and feared me , and when the thought of it drove me to drink , then she despised me as well .
@@ -487,8 +487,8 @@ That night I made up the packet for Sarah Cushing , and next day I sent it from 
 You can hang me , or do what you like with me , but you can not punish me as I have been punished already .
 I can not shut my eyes but I see those two faces staring at me -- staring at me as they stared when my boat broke through the haze .
 I killed them quick , but they are killing me slow ; and if I have another night of it I shall be either mad or dead before morning .
-You wo n't put me alone into a cell , sir ?
-For pity 's sake do n't , and may you be treated in your day of agony as you treat me now . '
+You wo not put me alone into a cell , sir ?
+For pity 's sake do not , and may you be treated in your day of agony as you treat me now . '
 `` What is the meaning of it , Watson ? '' said Holmes solemnly as he laid down the paper .
 `` What object is served by this circle of misery and violence and fear ?
 It must tend to some end , or else our universe is ruled by chance , which is unthinkable .

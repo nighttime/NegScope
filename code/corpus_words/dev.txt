@@ -84,7 +84,7 @@ An accident ? ''
 `` Murder , if ever there was one upon earth . ''
 `` Good God !
 This is awful !
-You do n't mean -- you do n't mean that I am suspected ? ''
+You do not mean -- you do not mean that I am suspected ? ''
 `` A letter of yours was found in the dead man 's pocket , and we know by it that you had planned to pass last night at his house . ''
 `` So I did . ''
 `` Oh , you did , did you ? ''
@@ -335,7 +335,7 @@ The telegram was a list of names and addresses :
 Lord Harringby , The Dingle ; Sir George Ffolliott , Oxshott Towers ; Mr. Hynes Hynes , J.P. , Purdley Place ; Mr. James Baker Williams , Forton Old Hall ; Mr. Henderson , High Gable ; Rev. Joshua Stone , Nether Walsling .
 `` This is a very obvious way of limiting our field of operations , '' said Holmes .
 `` No doubt Baynes , with his methodical mind , has already adopted some similar plan . ''
-`` I do n't quite understand . ''
+`` I do not quite understand . ''
 `` Well , my dear fellow , we have already arrived at the conclusion that the message received by Garcia at dinner was an appointment or an assignation .
 Now , if the obvious reading of it is correct , and in order to keep the tryst one has to ascend a main stair and seek the seventh door in a corridor , it is perfectly clear that the house is a very large one .
 It is equally certain that this house can not be more than a mile or two from Oxshott , since Garcia was walking in that direction and hoped , according to my reading of the facts , to be back in Wisteria Lodge in time to avail himself of an alibi , which would only be valid up to one o'clock .
@@ -357,7 +357,7 @@ An instant later a white-faced , hard-breathing policeman had opened the door , 
 `` What 's the matter , Walters ? '' asked Baynes sharply .
 The man mopped his forehead with his handkerchief and gave a long sigh of relief .
 `` I am glad you have come , sir .
-It has been a long evening , and I do n't think my nerve is as good as it was . ''
+It has been a long evening , and I do not think my nerve is as good as it was . ''
 `` Your nerve , Walters ?
 I should not have thought you had a nerve in your body . ''
 `` Well , sir , it 's this lonely , silent house and the queer thing in the kitchen .
@@ -369,18 +369,18 @@ It was at the window . ''
 `` It was just about two hours ago .
 The light was just fading .
 I was sitting reading in the chair .
-I do n't know what made me look up , but there was a face looking in at me through the lower pane .
+I do not know what made me look up , but there was a face looking in at me through the lower pane .
 Lord , sir , what a face it was !
 I 'll see it in my dreams . ''
 `` Tut , tut , Walters .
 This is not talk for a police-constable . ''
 `` I know , sir , I know ; but it shook me , sir , and there 's no use to deny it .
-It was n't black , sir , nor was it white , nor any colour that I know but a kind of queer shade like clay with a splash of milk in it .
+It was not black , sir , nor was it white , nor any colour that I know but a kind of queer shade like clay with a splash of milk in it .
 Then there was the size of it -- it was twice yours , sir .
 And the look of it -- the great staring goggle eyes , and the line of white teeth like a hungry beast .
-I tell you , sir , I could n't move a finger , nor get my breath , till it whisked away and was gone .
+I tell you , sir , I could not move a finger , nor get my breath , till it whisked away and was gone .
 Out I ran and through the shrubbery , but thank God there was no one there . ''
-`` If I did n't know you were a good man , Walters , I should put a black mark against you for this .
+`` If I did not know you were a good man , Walters , I should put a black mark against you for this .
 If it were the devil himself a constable on duty should never thank God that he could not lay his hands upon him .
 I suppose the whole thing is not a vision and a touch of nerves ? ''
 `` That , at least , is very easily settled , '' said Holmes , lighting his little pocket lantern .
@@ -473,7 +473,7 @@ A SOLUTION
 ARREST OF SUPPOSED ASSASSIN
 Holmes sprang in his chair as if he had been stung when I read the headlines .
 `` By Jove ! '' he cried .
-`` You do n't mean that Baynes has got him ? ''
+`` You do not mean that Baynes has got him ? ''
 `` Apparently , '' said I as I read the following report :
 `` Great excitement was caused in Esher and the neighbouring district when it was learned late last night that an arrest had been effected in connection with the Oxshott murder .
 It will be remembered that Mr. Garcia , of Wisteria Lodge , was found dead on Oxshott Common , his body showing signs of extreme violence , and that on the same night his servant and his cook fled , which appeared to show their participation in the crime .
@@ -489,17 +489,17 @@ We understand that when the prisoner is brought before the magistrates a remand 
 We hurried down the village street and found , as we had expected , that the inspector was just leaving his lodgings .
 `` You 've seen the paper , Mr. Holmes ? '' he asked , holding one out to us .
 `` Yes , Baynes , I 've seen it .
-Pray do n't think it a liberty if I give you a word of friendly warning . ''
+Pray do not think it a liberty if I give you a word of friendly warning . ''
 `` Of warning , Mr. Holmes ? ''
 `` I have looked into this case with some care , and I am not convinced that you are on the right lines .
-I do n't want you to commit yourself too far unless you are sure . ''
+I do not want you to commit yourself too far unless you are sure . ''
 `` You 're very kind , Mr. Holmes . ''
 `` I assure you I speak for your good . ''
 It seemed to me that something like a wink quivered for an instant over one of Mr. Baynes 's tiny eyes .
 `` We agreed to work on our own lines , Mr. Holmes .
 That 's what I am doing . ''
 `` Oh , very good , '' said Holmes .
-`` Do n't blame me . ''
+`` Do not blame me . ''
 `` No , sir ; I believe you mean well by me .
 But we all have our own systems , Mr. Holmes .
 You have yours , and maybe I have mine . ''
@@ -509,15 +509,15 @@ This fellow is a perfect savage , as strong as a cart-horse and as fierce as the
 He chewed Downing 's thumb nearly off before they could master him .
 He hardly speaks a word of English , and we can get nothing out of him but grunts . ''
 `` And you think you have evidence that he murdered his late master ? ''
-`` I did n't say so , Mr. Holmes ; I did n't say so .
+`` I did not say so , Mr. Holmes ; I did not say so .
 We all have our little ways .
 You try yours and I will try mine .
 That 's the agreement . ''
 Holmes shrugged his shoulders as we walked away together .
-`` I ca n't make the man out .
+`` I ca not make the man out .
 He seems to be riding for a fall .
 Well , as he says , we must each try our own way and see what comes of it .
-But there 's something in Inspector Baynes which I ca n't quite understand . ''
+But there 's something in Inspector Baynes which I ca not quite understand . ''
 `` Just sit down in that chair , Watson , '' said Sherlock Holmes when we had returned to our apartment at the Bull .
 `` I want to put you in touch with the situation , as I may need your help to-night .
 Let me show you the evolution of this case so far as I have been able to follow it .
@@ -575,7 +575,7 @@ It was my system which enabled me to find John Warner , late gardener of High Ga
 He in turn had friends among the indoor servants who unite in their fear and dislike of their master .
 So I had my key to the secrets of the establishment .
 `` Curious people , Watson !
-I do n't pretend to understand it all yet , but very curious people anyway .
+I do not pretend to understand it all yet , but very curious people anyway .
 It 's a double-winged house , and the servants live on one side , the family on the other .
 There 's no link between the two save for Henderson 's own servant , who serves the family 's meals .
 Everything is carried to a certain door , which forms the one connection .
@@ -614,7 +614,7 @@ Our whole scheme might seem fantastic if laid before a magistrate .
 The woman 's disappearance counts for nothing , since in that extraordinary household any member of it might be invisible for a week .
 And yet she may at the present moment be in danger of her life .
 All I can do is to watch the house and leave my agent , Warner , on guard at the gates .
-We ca n't let such a situation continue .
+We ca not let such a situation continue .
 If the law can do nothing we must take the risk ourselves . ''
 `` What do you suggest ? ''
 `` I know which is her room .
@@ -642,7 +642,7 @@ She was like one walking in her sleep , but when they tried to get her into the 
 They pushed her into the carriage .
 She fought her way out again .
 I took her part , got her into a cab , and here we are .
-I sha n't forget the face at the carriage window as I led her away .
+I sha not forget the face at the carriage window as I led her away .
 I 'd have a short life if he had his way -- the black-eyed , scowling , yellow devil . ''
 We carried her upstairs , laid her on the sofa , and a couple of cups of the strongest coffee soon cleared her brain from the mists of the drug .
 Baynes had been summoned by Holmes , and the situation rapidly explained to him .
@@ -665,7 +665,7 @@ Baynes flushed with pleasure .
 Wherever the High Gable folk go he will keep them in sight .
 But he must have been hard put to it when Miss Burnet broke away .
 However , your man picked her up , and it all ends well .
-We ca n't arrest without her evidence , that is clear , so the sooner we get a statement the better . ''
+We ca not arrest without her evidence , that is clear , so the sooner we get a statement the better . ''
 `` Every minute she gets stronger , '' said Holmes , glancing at the governess .
 `` But tell me , Baynes , who is this man Henderson ? ''
 `` Henderson , '' the inspector answered , `` is Don Murillo , once called the Tiger of San Pedro . ''
