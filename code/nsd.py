@@ -14,11 +14,12 @@ import torch.optim as optim
 from pytorch_transformers import *
 
 
-GCN  = 0
-RNN  = 1
-TRNN = 2
+GCN   = 0
+RNN   = 1
+TRNN  = 2
+TLSTM = 3
 
-MODEL = RNN
+MODEL = TRNN
 
 
 if MODEL == RNN:
@@ -32,17 +33,17 @@ if MODEL == RNN:
 	BATCH_SIZE = 30
 
 	WEIGHT_DECAY = 5e-4
-	DROPOUT = 0.25
+	DROPOUT_P = 0.25
 
-elif MODEL in (GCN, TRNN):
+elif MODEL in (GCN, TRNN, TLSTM):
 	EMB_FEATURES = 128
 	POS_EMB_FEATURES = 16
 	HIDDEN_UNITS = 200 #150
 	GCN_LAYERS = 12
 	NUM_CLASSES = 2
 
-	EPOCHS = 50
-	LR = 0.0001 #0.001 is good!
+	EPOCHS = 200
+	LR = 0.001 #0.001 is good!
 	BATCH_SIZE = 30
 
 	WEIGHT_DECAY = 0
@@ -58,14 +59,19 @@ def build_gcn_model(vocab_size, directional=False):
 	model = GraphConvTagger(GCN_LAYERS, EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab_size, directional=directional)
 	return model
 
-def build_recurrent_model(vocab_size, pos_size):
+def build_recurrent_model(vocab_size, pos_size, pretrained_embs):
 	print(Color.BOLD + 'RNN MODEL' + Color.ENDC)
-	model = RecurrentTagger(EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab_size, POS_EMB_FEATURES, pos_size)
+	model = RecurrentTaggerD(EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab_size, POS_EMB_FEATURES, pos_size, use_pretrained_embs=pretrained_embs, dropout_p=DROPOUT_P)
 	return model
 
 def build_tree_recurrent_model(vocab_size, syntax_size, pretrained_embs):
 	print(Color.BOLD + 'TRNN MODEL' + Color.ENDC)
 	model = TreeRecurrentTagger(HIDDEN_UNITS, NUM_CLASSES, vocab_size, syntax_size, pretrained_embs, dropout_p=DROPOUT_P)
+	return model
+
+def build_tree_lstm_model(vocab_size, syntax_size, pretrained_embs):
+	print(Color.BOLD + 'TLSTM MODEL' + Color.ENDC)
+	model = TreeLSTMTagger(HIDDEN_UNITS, NUM_CLASSES, vocab_size, syntax_size, pretrained_embs, dropout_p=DROPOUT_P)
 	return model
 
 def decode(inds, ind2word):
@@ -142,14 +148,11 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 			batch_word_index = word_index[batch_slice]
 			batch_cue        = cue[batch_slice]
 			batch_scope      = scope[batch_slice]
-			if embs is not None:
-				batch_embs   = embs[batch_slice]
-			else:
-				embs = None
+			batch_embs       = None if embs is None else embs[batch_slice]
 
 			if MODEL == RNN:
 				w_index = None
-			elif MODEL in (GCN, TRNN):
+			elif MODEL in (GCN, TRNN, TLSTM):
 				w_index = batch_word_index
 			
 			seq_lens = None
@@ -165,7 +168,7 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 				batch_output = model(batch_ts, batch_cue, batch_pos, batch_embs)
 			elif MODEL == GCN:
 				batch_output = model(batch_ts, batch_cue, batch_A)
-			elif MODEL == TRNN:
+			elif MODEL in (TRNN, TLSTM):
 				batch_output = model(batch_ts, batch_word_index, batch_cue, batch_A, batch_pos, batch_embs)
 			
 			loss, acc, f1, batch_actual = assess_batch(batch_output, batch_scope, batch_word_index, f1_loss, seq_lens)
@@ -214,6 +217,9 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 			print(Color.WARNING + '~~~ EARLY STOPPING ~~~' + Color.ENDC)
 			break
 
+		# if epoch == 12:
+		# 	pdb.set_trace()
+
 	pdb.set_trace()
 	print(Color.BOLD + '=== FINISHED ===' + Color.ENDC)
 
@@ -245,7 +251,7 @@ def test_dataset(model, dataset, loss_criterion):
 		test_output = model(test_ts, test_cue, test_A)
 	elif MODEL == RNN:
 		test_output = model(test_ts, test_cue, test_pos, test_emb)
-	elif MODEL == TRNN:
+	elif MODEL in (TRNN, TLSTM):
 		test_output = model(test_ts, test_word_index, test_cue, test_A, test_pos, test_emb)
 	
 	# Count metrics
@@ -259,23 +265,27 @@ def assess_batch(model_output, y, word_index, loss_criterion, seq_lens=None):
 	losses, accs, f1s = [], [], []
 
 	# class_wt = torch.tensor([0.1, 10.0]) # negated sentences to non-neg
-	class_wt = torch.tensor([0.681,0.319]) # negated tokens to non-neg (given sentence has cue)
+	class_wt = torch.tensor([0.65, 0.35])#[0.681,0.319]) # negated tokens to non-neg (given sentence has cue)
 
 	for j in range(batch_len):
 		if MODEL == RNN:
 			confidence_output = model_output[j,:seq_lens[j]]
 			class_output = yhat[j,:seq_lens[j]]
 			expected_output = torch.tensor(y[j])
-		elif MODEL in (GCN, TRNN):
+		elif MODEL in (GCN, TRNN, TLSTM):
 			confidence_output = model_output[j,word_index[j]]
 			class_output = yhat[j,word_index[j]]
 			expected_output = torch.tensor(y[j])
+
+		# pdb.set_trace()
+		ce_loss = nn.CrossEntropyLoss()#weight=class_wt)
+		losses.append(ce_loss(confidence_output, expected_output))
 
 		# FOR Neg Log Likelihood
 		# log_output = torch.log(confidence_output)
 		# losses.append(F.nll_loss(log_output, expected_output, weight=class_wt))
 		# OR FOR F1 LOSS
-		losses.append(loss_criterion(confidence_output[:,1], expected_output))
+		# losses.append(loss_criterion(confidence_output[:,1], expected_output))
 
 		accs.append(accuracy(class_output, expected_output))
 		f1s.append(f1_score(class_output, expected_output))
@@ -399,9 +409,12 @@ def main():
 	if MODEL == GCN:
 		model = build_gcn_model(len(word2ind), directional=directional)
 	elif MODEL == RNN:
-		model = build_recurrent_model(len(word2ind), len(syn2ind))
+		model = build_recurrent_model(len(word2ind), len(syn2ind), pretrained_embs)
 	elif MODEL == TRNN:
 		model = build_tree_recurrent_model(len(word2ind), len(syn2ind), pretrained_embs)
+	elif MODEL == TLSTM:
+		model = build_tree_lstm_model(len(word2ind), len(syn2ind), pretrained_embs)
+
 	# pdb.set_trace()
 	# Train and Test model
 	run_model(model, train, dev, test, ind2word, ind2syn)
