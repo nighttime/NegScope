@@ -19,7 +19,7 @@ RNN   = 1
 TRNN  = 2
 TLSTM = 3
 
-MODEL = TRNN
+MODEL = RNN
 
 
 if MODEL == RNN:
@@ -42,14 +42,14 @@ elif MODEL in (GCN, TRNN, TLSTM):
 	GCN_LAYERS = 12
 	NUM_CLASSES = 2
 
-	EPOCHS = 200
+	EPOCHS = 130
 	LR = 0.001 #0.001 is good!
 	BATCH_SIZE = 30
 
 	WEIGHT_DECAY = 0
 	DROPOUT_P = 0
 
-LR_PATIENCE = 10
+LR_PATIENCE = 11
 ES_PATIENCE = 2 * LR_PATIENCE
 
 
@@ -61,7 +61,7 @@ def build_gcn_model(vocab_size, directional=False):
 
 def build_recurrent_model(vocab_size, pos_size, pretrained_embs):
 	print(Color.BOLD + 'RNN MODEL' + Color.ENDC)
-	model = RecurrentTaggerD(EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab_size, POS_EMB_FEATURES, pos_size, use_pretrained_embs=pretrained_embs, dropout_p=DROPOUT_P)
+	model = RecurrentTagger(EMB_FEATURES, HIDDEN_UNITS, NUM_CLASSES, vocab_size, POS_EMB_FEATURES, pos_size, use_pretrained_embs=pretrained_embs, dropout_p=DROPOUT_P)
 	return model
 
 def build_tree_recurrent_model(vocab_size, syntax_size, pretrained_embs):
@@ -278,7 +278,7 @@ def assess_batch(model_output, y, word_index, loss_criterion, seq_lens=None):
 			expected_output = torch.tensor(y[j])
 
 		# pdb.set_trace()
-		ce_loss = nn.CrossEntropyLoss()#weight=class_wt)
+		ce_loss = nn.CrossEntropyLoss()
 		losses.append(ce_loss(confidence_output, expected_output))
 
 		# FOR Neg Log Likelihood

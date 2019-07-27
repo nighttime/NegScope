@@ -192,37 +192,56 @@ class GraphConvolution(Module):
 #                + str(self.out_features) + ')'
 
 class RecurrentTagger(Module):
-    def __init__(self, in_size, out_size, num_classes, vocab_size, pos_size, pos_vocab_size, dropout_p=0):
+    def __init__(self, in_size, out_size, num_classes, vocab_size, pos_size, pos_vocab_size, use_pretrained_embs=False, dropout_p=0):
         super(RecurrentTagger, self).__init__()
         self.in_size = in_size
         self.out_size = out_size
         self.num_classes = num_classes
         self.pos_vocab_size = pos_vocab_size
+        self.use_pretrained_embs = use_pretrained_embs
 
-        self.word_embedding = nn.Embedding(vocab_size, in_size - num_classes)
+        if self.use_pretrained_embs:
+            # self.emb2input = nn.Linear(768, in_size)
+            self.lstm_input_size = 768 + num_classes + pos_size
+        else:
+            self.word_embedding = nn.Embedding(vocab_size, in_size)
+            self.lstm_input_size = in_size + num_classes + pos_size
+
+        # self.word_embedding = nn.Embedding(vocab_size, in_size - num_classes)
         self.pos_embedding = nn.Embedding(pos_vocab_size, pos_size)
         # self.bilstm = nn.LSTM(in_size, out_size, bidirectional=True)
         # self.bilstm = nn.LSTM(in_size+pos_size, out_size, bidirectional=True)
-        self.drop_layer = nn.Dropout(p=0.25)
-        self.bilstm = nn.LSTM(768+num_classes+pos_size, out_size, bidirectional=True)
+        # self.drop_layer = nn.Dropout(p=0.25)
+        self.bilstm = nn.LSTM(self.lstm_input_size, out_size, bidirectional=True)
         self.classifier = nn.Linear(out_size*2, num_classes)
 
     def forward(self, x, cue, pos, emb):
         bsize = x.shape[0]
         dsize = x.shape[1]
+
+        if self.use_pretrained_embs:
+            word_emb = torch.zeros(bsize, dsize, emb[0].shape[1])
+            # word_emb = torch.zeros(bsize, dsize, self.in_size)
+            for i in range(bsize):
+                # e = self.emb2input(torch.tensor(emb[i]).float())
+                e = torch.tensor(emb[i]).float()
+                word_emb[i,0:e.shape[0],:] += e
+        else:
+            word_emb = self.word_embedding(torch.tensor(x))
         
-        packed_word_emb = torch.zeros(bsize, dsize, emb[0].shape[1])
-        for i in range(bsize):
-            e = torch.tensor(emb[i]).float()    
-            packed_word_emb[i,0:e.shape[0],:] += e
+        # packed_word_emb = torch.zeros(bsize, dsize, emb[0].shape[1])
+        # for i in range(bsize):
+        #     e = torch.tensor(emb[i]).float()
+        #     packed_word_emb[i,0:e.shape[0],:] += e
         
         # word_emb = self.word_embedding(torch.tensor(x))
         # pos_emb = make_one_hot(pos, self.pos_vocab_size)
         pos_emb = self.pos_embedding(torch.tensor(pos))
         cue_emb = make_one_hot(cue, self.num_classes)
 
-        lstm_input = torch.cat((packed_word_emb, cue_emb, pos_emb), -1)
-        lstm_input = self.drop_layer(lstm_input)
+        lstm_input = torch.cat((word_emb, cue_emb, pos_emb), -1)
+        # pdb.set_trace()
+        # lstm_input = self.drop_layer(lstm_input)
 
         lstm_output, _ = self.bilstm(lstm_input)
 
@@ -231,6 +250,7 @@ class RecurrentTagger(Module):
         class_scores = torch.tanh(class_scores)
 
         yhat = F.softmax(class_scores, dim=-1)
+        # yhat = class_scores
 
         return yhat
 
@@ -316,7 +336,9 @@ class RecurrentTaggerD(Module):
         class_scores = self.classifier(lstm_output)
         class_scores = torch.tanh(class_scores)
 
-        yhat = F.softmax(class_scores, dim=-1)
+        yhat = class_scores
+
+        # yhat = F.softmax(class_scores, dim=-1)
 
         return yhat
 
@@ -506,7 +528,7 @@ class TreeRecurrentTagger(Module):
             x_emb = self.leaf2node(in_emb)
 
             if self.training:
-                x_emb = x_emb.clone() * self.word_drop_mask
+                x_emb = x_emb.clone() * self.leaf_drop_mask
 
             A = adj[i,1]
             sentlen = A.shape[-1]
