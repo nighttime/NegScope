@@ -622,7 +622,6 @@ class TreeRecurrentTagger(Module):
         if self.training:
             parent_context = parent_context.clone() * self.down_drop_mask
         downward_context = torch.cat((cons_left, cons_right, parent_context), dim=-1)
-        # parent_context = self.drop_layer(parent_context)
         children_emb = torch.tanh(self.decompose(downward_context))
 
         left_emb, right_emb = torch.split(children_emb, self.hidden_size, dim=-1)

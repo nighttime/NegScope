@@ -19,7 +19,7 @@ RNN   = 1
 TRNN  = 2
 TLSTM = 3
 
-MODEL = RNN
+MODEL = TRNN
 
 
 if MODEL == RNN:
@@ -42,7 +42,7 @@ elif MODEL in (GCN, TRNN, TLSTM):
 	GCN_LAYERS = 12
 	NUM_CLASSES = 2
 
-	EPOCHS = 130
+	EPOCHS = 150
 	LR = 0.001 #0.001 is good!
 	BATCH_SIZE = 30
 
@@ -134,7 +134,7 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 		model.train()
 		
 		index = np.random.permutation(datalen)
-		ep_loss, ep_acc, ep_f1 = 0, 0, 0
+		ep_loss, ep_acc, ep_prec, ep_rec, ep_f1 = 0, 0, 0, 0, 0
 
 		batch_inds = range(0, datalen, BATCH_SIZE)
 		for i in batch_inds:
@@ -171,7 +171,7 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 			elif MODEL in (TRNN, TLSTM):
 				batch_output = model(batch_ts, batch_word_index, batch_cue, batch_A, batch_pos, batch_embs)
 			
-			loss, acc, f1, batch_actual = assess_batch(batch_output, batch_scope, batch_word_index, f1_loss, seq_lens)
+			loss, acc, prec, rec, f1, batch_actual = assess_batch(batch_output, batch_scope, batch_word_index, f1_loss, seq_lens)
 
 			# Helper functions to visualize expected and actual outcomes
 			print_actual = lambda c=BATCH_SIZE: print_batch(batch_ts, ind2word, word_index=w_index, cue=batch_cue, scope=batch_actual, cap=c)
@@ -180,6 +180,8 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 
 			ep_loss += loss.item()
 			ep_acc += acc
+			ep_prec += prec
+			ep_rec += rec
 			ep_f1 += f1
 			
 			loss.backward()
@@ -189,12 +191,14 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 			print_progress(progress, info='{:.3f}'.format(f1))
 
 		ep_loss /= len(batch_inds)
-		ep_acc /= len(batch_inds)
-		ep_f1 /= len(batch_inds)
-		hist['train'].append([ep_loss, ep_acc, ep_f1])
+		ep_acc  /= len(batch_inds)
+		ep_prec /= len(batch_inds)
+		ep_rec  /= len(batch_inds)
+		ep_f1   /= len(batch_inds)
+		hist['train'].append([ep_loss, ep_acc, ep_prec, ep_rec, ep_f1])
 
 		print()
-		print_results(ep_loss, ep_acc, ep_f1, 'train', Color.OKBLUE)
+		print_results(ep_loss, ep_acc, ep_prec, ep_rec, ep_f1, 'train', Color.OKBLUE)
 
 		with torch.no_grad():
 			# Dev set testing
@@ -209,7 +213,7 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 
 		scheduler.step(dev_results[0])
 
-		if epoch > 0 and test_results[2] <= hist['test'][-2][2]:
+		if epoch > 0 and test_results[-1] <= hist['test'][-2][-1]:
 			test_improvement_counter += 1
 		else:
 			test_improvement_counter = 0
@@ -220,8 +224,12 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 		# if epoch == 12:
 		# 	pdb.set_trace()
 
-	pdb.set_trace()
+	# pdb.set_trace()
 	print(Color.BOLD + '=== FINISHED ===' + Color.ENDC)
+	max_f1 = max(hist['test'], key=lambda x: x[-1])
+	max_index = hist['test'].index(max_f1)
+	print('Best f1 score at epoch {}'.format(max_index))
+	print_results(*max_f1, 'best', color=Color.WARNING)
 
 def pack_input_data_inplace(ts, cue, word_index):
 	seq_lens = []
@@ -293,14 +301,18 @@ def assess_batch(model_output, y, word_index, loss_criterion, seq_lens=None):
 	loss = sum(losses)/batch_len
 	acc = sum(accs)/batch_len
 	f1 = sum(f[0] for f in f1s)/batch_len
+	precision = sum(f[1] for f in f1s)/batch_len
+	recall = sum(f[2] for f in f1s)/batch_len
 
-	return loss, acc, f1, yhat
+	return loss, acc, precision, recall, f1, yhat
 
-def print_results(loss, acc, f1, name, color=None):
+def print_results(loss, acc, precision, recall, f1, name, color=None):
 	print((color + ' >' if color else ' -') + ' {:>6}'.format(name), \
-		'loss: {:.4f} '.format(loss), \
-		'acc: {:.4f} '.format(acc), \
-		'f1: {:.4f} '.format(f1) + (Color.ENDC if color else ''))
+		'l: {:.4f} '.format(loss), \
+		'a: {:.4f} '.format(acc), \
+		'p: {:.4f} '.format(precision), \
+		'r: {:.4f} '.format(recall), \
+		'f: {:.4f} '.format(f1) + (Color.ENDC if color else ''))
 
 def print_progress(progress, info='', bar_len=20):
 	filled = int(progress*bar_len)
@@ -362,18 +374,17 @@ def main():
 
 	# corpora[0] = [x for x in corpora[0] if x.longest_syntactic_path() <= 7]
 	# print('num sents', len(corpora[0]))
-	a = [s for s in corpora[0] if any("'" in w for w in s.words if w != "''")]
-	# pdb.set_trace()
+	# a = [s for s in corpora[0] if any("'" in w for w in s.words if w != "''")]
 
-	pre_embs = None
-	if pretrained_embs:
-		v = list(full_vocab)
-		pretrained_weights = 'bert-base-uncased'
-		bert_model = BertModel.from_pretrained(pretrained_weights, output_hidden_states=True)
-		# bert_model = BertForTokenClassification.from_pretrained(pretrained_weights, output_hidden_states=True)
-		bert_tokenizer = BertTokenizer.from_pretrained(pretrained_weights, never_split=v, do_basic_tokenize=False)
-		pre_embs = EmbeddingModel(bert_model, bert_tokenizer)
-		# pdb.set_trace()
+	# pre_embs = None
+	# if pretrained_embs:
+	# 	v = list(full_vocab)
+	# 	pretrained_weights = 'bert-base-uncased'
+	# 	bert_model = BertModel.from_pretrained(pretrained_weights, output_hidden_states=True)
+	# 	# bert_model = BertForTokenClassification.from_pretrained(pretrained_weights, output_hidden_states=True)
+	# 	bert_tokenizer = BertTokenizer.from_pretrained(pretrained_weights, never_split=v, do_basic_tokenize=False)
+	# 	pre_embs = EmbeddingModel(bert_model, bert_tokenizer)
+		
 
 	train, dev, test = format_data(
 		corpora, 
@@ -381,7 +392,8 @@ def main():
 		syn2ind, 
 		directional=directional, 
 		row_normalize=row_normalize, 
-		pretrained_embs_model=pre_embs)
+		embs_folder='pretrained_embs')
+		# pretrained_embs_model=pre_embs)
 	
 
 	# for c in corpora:
@@ -414,6 +426,8 @@ def main():
 		model = build_tree_recurrent_model(len(word2ind), len(syn2ind), pretrained_embs)
 	elif MODEL == TLSTM:
 		model = build_tree_lstm_model(len(word2ind), len(syn2ind), pretrained_embs)
+
+	print(Color.BOLD + 'PRETRAINED EMBS: ' + str(pretrained_embs) + Color.ENDC)
 
 	# pdb.set_trace()
 	# Train and Test model

@@ -94,12 +94,12 @@ def read_starsem_scope_data(fname, external_syntax_fname=None):
 	return sent_trees
 
 
-def _format_dataset(dataset, maxlen):
+def _format_dataset(dataset, maxlen, pre_embs_path=None):
 	# input: a corpus : [(A, ts, mask, cue, scope)]
 	# output: reformatted as numpy arrays : (A, ts, mask, cue, scope)
 	dlen = len(dataset)
 	Ashape = dataset[0][0].shape
-	pretrained_embs = len(dataset[0]) > 6
+	# pretrained_embs = len(dataset[0]) > 6
 
 	# A            = np.zeros((dlen, maxlen, maxlen))
 	# adjust shape of A in case it's a directional matrix (will have extra indice)
@@ -109,8 +109,12 @@ def _format_dataset(dataset, maxlen):
 	word_index   = np.zeros(dlen, dtype=object)
 	cue          = np.zeros((dlen, maxlen))
 	scope        = np.zeros(dlen, dtype=object)
-	if pretrained_embs:
-		embs     = np.zeros(dlen, dtype=object)
+	# if pretrained_embs:
+	# 	embs     = np.zeros(dlen, dtype=object)
+	# else:
+	# 	embs     = None
+	if pre_embs_path:
+		embs     = np.load(pre_embs_path, allow_pickle=True)
 	else:
 		embs     = None
 
@@ -126,15 +130,19 @@ def _format_dataset(dataset, maxlen):
 		word_index[i]           = np.array([i for i,v in enumerate(d[3]) if v])
 		cue[i,0:len(d[3])]     += np.array(d[4])
 		scope[i]                = np.array(d[5])
-		if pretrained_embs:
-			embs[i]             = d[6]
+
+		# if pretrained_embs:
+		# 	embs[i]             = d[6]
+
+	pdb.set_trace()
 
 	return (A, ts, pos, word_index, cue, scope, embs)
 
 
-def format_data(corpora, word2ind, syn2ind, directional=False, row_normalize=True, pretrained_embs_model=None):
+def format_data(corpora, word2ind, syn2ind, directional=False, row_normalize=True, embs_folder=None, pretrained_embs_model=None):
 	# input: a corpora : [[ParseTree]]
 	# output: reformatted data of type : [(A, ts, mask, cue, scope)]
+	assert len(corpora) == 3
 	data_splits = []
 	for corpus in corpora:
 		d = []
@@ -146,23 +154,23 @@ def format_data(corpora, word2ind, syn2ind, directional=False, row_normalize=Tru
 			scope = s.negation_surface_scope()
 			items = [A, ts, pos, word_mask, cue, scope]
 
-			if pretrained_embs_model is not None:
-				words = s.tree_leaf_tokens()
-				sent = ' '.join(words)
-				tokens = pretrained_embs_model.tokenizer.encode(sent)
-				input_ids = torch.tensor([tokens])
-				model_outputs = pretrained_embs_model.model(input_ids)
-				hidden_states = model_outputs[0].squeeze() # model outputs
-				# hidden_states = model_outputs[2][4].squeeze() # model intermediate layer outputs
-				partial_toks = [pretrained_embs_model.tokenizer._convert_id_to_token(tokens[i]) for i in range(len(tokens))]
-				embs = np.zeros([len(words), hidden_states.shape[-1]])
+			# if pretrained_embs_model is not None:
+			# 	words = s.tree_leaf_tokens()
+			# 	sent = ' '.join(words)
+			# 	tokens = pretrained_embs_model.tokenizer.encode(sent)
+			# 	input_ids = torch.tensor([tokens])
+			# 	model_outputs = pretrained_embs_model.model(input_ids)
+			# 	hidden_states = model_outputs[0].squeeze() # model outputs
+			# 	# hidden_states = model_outputs[2][4].squeeze() # model intermediate layer outputs
+			# 	partial_toks = [pretrained_embs_model.tokenizer._convert_id_to_token(tokens[i]) for i in range(len(tokens))]
+			# 	embs = np.zeros([len(words), hidden_states.shape[-1]])
 				
-				ct = -1
-				for j,t in enumerate(partial_toks):
-					if not t.startswith('##'):
-						ct += 1
-					embs[ct] += hidden_states[j].detach().numpy()
-				items.append(embs)
+			# 	ct = -1
+			# 	for j,t in enumerate(partial_toks):
+			# 		if not t.startswith('##'):
+			# 			ct += 1
+			# 		embs[ct] += hidden_states[j].detach().numpy()
+			# 	items.append(embs)
 
 			d.append(tuple(items))
 			print('\rencoding dataset: {:.3f}'.format(float(i+1)/len(corpus)), end='')
@@ -171,7 +179,9 @@ def format_data(corpora, word2ind, syn2ind, directional=False, row_normalize=Tru
 		data_splits.append(d)
 
 	maxlen = max(max(len(s[1]) for s in d) for d in data_splits)
-	return [_format_dataset(d, maxlen) for d in data_splits]
+	embs_fnames = ['train.npy', 'dev.npy', 'test.npy']
+	return [_format_dataset(d, maxlen, pre_embs_path=(embs_folder + '/' + embs_fnames[i] if embs_folder else None)) for i,d in enumerate(data_splits)]
+	# return [_format_dataset(d, maxlen) for i,d in enumerate(data_splits)]
 
 def read_corpora(only_words=False, only_negations=False, external_syntax_folder=None, derive_pos_from_syntax=False, condense_single_branches=False):
 	# output: list of corpora, each a list of ParseTree : [[ParseTree]] OR a list of words : [[str]]
