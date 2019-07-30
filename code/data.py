@@ -70,6 +70,8 @@ def read_starsem_scope_data(fname, external_syntax_fname=None):
 	if external_syntax_fname:
 		external_syntax_trees = list(open(external_syntax_fname))
 
+	sentence_copies = []
+
 	ext_p = 0
 	for i,vals in enumerate(sents):
 		syntax = external_syntax_trees[ext_p].replace('\n', '') if external_syntax_fname else vals[2]
@@ -82,16 +84,111 @@ def read_starsem_scope_data(fname, external_syntax_fname=None):
 		# 2 negations in this sentence
 			sent_trees.append(ParsedSentence(*vals[:2], syntax, negation=vals[3][0]))
 			sent_trees.append(ParsedSentence(*vals[:2], syntax, negation=vals[3][1]))
+			sentence_copies.extend([1,2])
 		elif vals[3][0]:
 		# 1 negation in this sentence
 			sent_trees.append(ParsedSentence(*vals[:2], syntax, negation=vals[3][0]))
+			sentence_copies.append(1)
 		else:
 		# 0 negations in this sentence
 			sent_trees.append(ParsedSentence(*vals[:2], syntax))
+			sentence_copies.append(1)
 
 		ext_p += 1
 
-	return sent_trees
+	return sent_trees, sentence_copies
+
+def _prepare_starsem_output_scope_data(gold_lines, model_outputs, corpus_data, sent_ptr=0):
+	A, ts, pos, word_index, cue, scope, embs = corpus_data
+	sents_out = []
+	gold_word_ptr = 0
+	sent_ptr_incr = 0
+	for i,line in enumerate(gold_lines):
+
+		if line == '\n':
+			# if i > 0:
+			# 	try:
+			# 		assert int(gold_lines[i-1].split('\t')[2]+1) == len(word_index[sent_ptr])
+			# 	except:
+			# 		pdb.set_trace()
+			sents_out.append('')
+			sent_ptr += sent_ptr_incr
+			sent_ptr_incr = 0
+			gold_word_ptr = 0
+			double_neg = False
+			continue
+
+		line_bits = line.strip().split('\t')
+		
+		# Negation in this sentence
+		if line_bits[7] != '***':
+			sent_ptr_incr = 1
+			words = word_index[sent_ptr]
+			in_scope = model_outputs[sent_ptr][words][gold_word_ptr]
+			if in_scope:
+				base_word = line_bits[3]
+				sent_cue = line_bits[7]
+				# In the case where a cue is only part of a word, 
+				if sent_cue != '_':
+					scope_word = base_word.replace(sent_cue, '', 1)
+					line_bits[8] = scope_word
+				else:
+					line_bits[8] = base_word
+			else:
+				line_bits[8] = '_'
+			line_bits[9] = '_'
+
+			# Second negation in this sentence
+			if len(line_bits) > 10:
+				sent_ptr_incr = 2
+				sent_ptr2 = sent_ptr+1
+				# try:
+				assert len(word_index[sent_ptr]) == len(word_index[sent_ptr2])
+				# except:
+				# 	pdb.set_trace()
+				words = word_index[sent_ptr2]
+				in_scope = model_outputs[sent_ptr2][words][gold_word_ptr]
+				if in_scope:
+					base_word = line_bits[3]
+					sent_cue = line_bits[10]
+					# In the case where a cue is only part of a word, 
+					if sent_cue != '_':
+						scope_word = base_word.replace(sent_cue, '', 1)
+						line_bits[11] = scope_word
+					else:
+						line_bits[11] = base_word
+				else:
+					line_bits[11] = '_'
+				line_bits[12] = '_'
+
+		sents_out.append(line_bits)
+		gold_word_ptr += 1
+
+	return sents_out, sent_ptr
+
+def write_starsem_scope_data(out_fname1, out_fname2, model_outputs, corpus_data):
+	sent_ptr = 0
+
+	cardboard = DATA_FOLDER + TEST_FILE_A
+	circle    = DATA_FOLDER + TEST_FILE_B
+
+	with open(cardboard, 'r') as gold_A:
+		lines1 = gold_A.readlines()
+
+	with open(circle, 'r') as gold_B:
+		lines2 = gold_B.readlines()
+	
+	sents_out1, sent_ptr = _prepare_starsem_output_scope_data(lines1, model_outputs, corpus_data)
+	sents_out2, _        = _prepare_starsem_output_scope_data(lines2, model_outputs, corpus_data, sent_ptr=sent_ptr)
+
+	with open(out_fname1, 'w') as outfile:
+		for line in sents_out1:
+			outfile.write('\t'.join(line) + '\n')
+
+	with open(out_fname2, 'w') as outfile:
+		for line in sents_out2:
+			outfile.write('\t'.join(line) + '\n')
+
 
 
 def _format_dataset(dataset, maxlen, pre_embs_path=None):
@@ -133,8 +230,6 @@ def _format_dataset(dataset, maxlen, pre_embs_path=None):
 
 		# if pretrained_embs:
 		# 	embs[i]             = d[6]
-
-	pdb.set_trace()
 
 	return (A, ts, pos, word_index, cue, scope, embs)
 
@@ -186,8 +281,10 @@ def format_data(corpora, word2ind, syn2ind, directional=False, row_normalize=Tru
 def read_corpora(only_words=False, only_negations=False, external_syntax_folder=None, derive_pos_from_syntax=False, condense_single_branches=False):
 	# output: list of corpora, each a list of ParseTree : [[ParseTree]] OR a list of words : [[str]]
 	corpora = []
+	corp_sent_copies = []
 	for corpus_file in [TRAINING_FILE, DEV_FILE, [TEST_FILE_A, TEST_FILE_B]]:
 		corpus = []
+		sent_copies = []
 		if isinstance(corpus_file, list):
 			for c in corpus_file:
 				print('reading in:', c)
@@ -195,21 +292,26 @@ def read_corpora(only_words=False, only_negations=False, external_syntax_folder=
 				if only_words:
 					corpus += _starsem_sentence_vals(DATA_FOLDER + c)
 				else:
-					corpus += read_starsem_scope_data(DATA_FOLDER + c, external_syntax_fname=ext_syntax)
+					corpus_, sent_copies_ = read_starsem_scope_data(DATA_FOLDER + c, external_syntax_fname=ext_syntax)
+					corpus += corpus_
+					sent_copies += sent_copies_
 		else:
 			print('reading in:', corpus_file)
 			ext_syntax = external_syntax_folder + corpus_file if external_syntax_folder else None
 			if only_words:
 				corpus = _starsem_sentence_vals(DATA_FOLDER + corpus_file)
 			else:
-				corpus = read_starsem_scope_data(DATA_FOLDER + corpus_file, external_syntax_fname=ext_syntax)
+				corpus_, sent_copies_ = read_starsem_scope_data(DATA_FOLDER + corpus_file, external_syntax_fname=ext_syntax)
+				corpus += corpus_
+				sent_copies += sent_copies_
 		
 		if only_negations:
 			if only_words:
 				# Keep sentence values if the negation component contains a scope
 				corpus = [vs for vs in corpus if len(vs[-1][0])]
 			else:
-				corpus = [s for s in corpus if s.negation]
+				corpus, sent_copies = zip(*[s for s in zip(corpus, sent_copies) if s[0].negation])
+				corpus, sent_copies = list(corpus), list(sent_copies)
 
 		if only_words:
 			corpus = [vs[0] for vs in corpus]
@@ -222,8 +324,9 @@ def read_corpora(only_words=False, only_negations=False, external_syntax_folder=
 					t.condense_single_branches()
 
 		corpora.append(corpus)
-		
-	return corpora
+		corp_sent_copies.append(sent_copies)
+
+	return corpora, corp_sent_copies
 
 def make_corpus_index(corpus):
 	# input: a corpus, as a list of ParseTree : [ParseTree]
@@ -250,7 +353,7 @@ def get_parse_data(
 	derive_pos_from_syntax=False, 
 	condense_single_branches=False):
 	# Read in corpus data
-	corpora = read_corpora(
+	corpora, corp_sent_copies = read_corpora(
 		only_negations=only_negations, 
 		external_syntax_folder=external_syntax_folder, 
 		derive_pos_from_syntax=derive_pos_from_syntax,
@@ -265,7 +368,7 @@ def get_parse_data(
 
 	full_vocab = train_voc | dev_voc | test_voc
 
-	return corpora, word2ind, syn2ind, full_vocab
+	return corpora, corp_sent_copies, word2ind, syn2ind, full_vocab
 
 
 

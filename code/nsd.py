@@ -19,7 +19,7 @@ RNN   = 1
 TRNN  = 2
 TLSTM = 3
 
-MODEL = TRNN
+MODEL = RNN
 
 
 if MODEL == RNN:
@@ -28,7 +28,7 @@ if MODEL == RNN:
 	HIDDEN_UNITS = 200
 	NUM_CLASSES = 2
 
-	EPOCHS = 60
+	EPOCHS = 100
 	LR = 0.0001
 	BATCH_SIZE = 30
 
@@ -42,7 +42,7 @@ elif MODEL in (GCN, TRNN, TLSTM):
 	GCN_LAYERS = 12
 	NUM_CLASSES = 2
 
-	EPOCHS = 150
+	EPOCHS = 130
 	LR = 0.001 #0.001 is good!
 	BATCH_SIZE = 30
 
@@ -90,7 +90,7 @@ def print_sent(tokens, word_index, ind2word, cue=None, scope=None, pos=None):
 		end = ''
 		# pdb.set_trace()
 		if word_index is None or i in word_index:
-			if cue is not None and cue[i] == 1:
+			if cue is not None and cue[i]:
 				begin += Color.BOLD
 				end += Color.ENDC
 			if scope is not None:
@@ -171,7 +171,7 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 			elif MODEL in (TRNN, TLSTM):
 				batch_output = model(batch_ts, batch_word_index, batch_cue, batch_A, batch_pos, batch_embs)
 			
-			loss, acc, prec, rec, f1, batch_actual = assess_batch(batch_output, batch_scope, batch_word_index, f1_loss, seq_lens)
+			loss, acc, prec, rec, f1, counts, batch_actual = assess_batch(batch_output, batch_scope, batch_word_index, f1_loss, seq_lens)
 
 			# Helper functions to visualize expected and actual outcomes
 			print_actual = lambda c=BATCH_SIZE: print_batch(batch_ts, ind2word, word_index=w_index, cue=batch_cue, scope=batch_actual, cap=c)
@@ -190,6 +190,7 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 			progress = float(i+batch_len)/datalen
 			print_progress(progress, info='{:.3f}'.format(f1))
 
+
 		ep_loss /= len(batch_inds)
 		ep_acc  /= len(batch_inds)
 		ep_prec /= len(batch_inds)
@@ -202,14 +203,24 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 
 		with torch.no_grad():
 			# Dev set testing
-			*dev_results, _ = test_dataset(model, dev, f1_loss)
+			*dev_results, counts, _ = test_dataset(model, dev, f1_loss, ind2word)
 			hist['dev'].append(dev_results)
 			print_results(*dev_results, 'dev', Color.FAIL)
 
 			# Test set testing
-			*test_results, _ = test_dataset(model, test, f1_loss)
+			*test_results, counts, test_predictions = test_dataset(model, test, f1_loss, ind2word, should_stop=(epoch>2))
 			hist['test'].append(test_results)
 			print_results(*test_results, 'test', Color.OKGREEN)
+			print_results(*test_results[:2], *calc_f1(*counts), 'test', Color.OKGREEN)
+			print('tp: {}\tfp: {}\tfn: {}'.format(*[c.item() for c in counts]))
+
+			if epoch > 4:
+				test_A, test_ts, test_pos, test_word_index, test_cue, test_scope, test_emb = test
+				pt_actual = lambda c=BATCH_SIZE: print_batch(test_ts, ind2word, word_index=test_word_index, cue=test_cue, scope=test_predictions, cap=c)
+				pt_expected = lambda c=BATCH_SIZE: print_batch(test_ts, ind2word, word_index=test_word_index, cue=test_cue, scope=test_scope, cap=c)
+				# write_starsem_scope_data('cardboard', 'circle', test_predictions, test)
+				# pdb.set_trace()
+				# return test_predictions
 
 		scheduler.step(dev_results[0])
 
@@ -221,15 +232,13 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 			print(Color.WARNING + '~~~ EARLY STOPPING ~~~' + Color.ENDC)
 			break
 
-		# if epoch == 12:
-		# 	pdb.set_trace()
-
 	# pdb.set_trace()
 	print(Color.BOLD + '=== FINISHED ===' + Color.ENDC)
 	max_f1 = max(hist['test'], key=lambda x: x[-1])
 	max_index = hist['test'].index(max_f1)
 	print('Best f1 score at epoch {}'.format(max_index))
 	print_results(*max_f1, 'best', color=Color.WARNING)
+	return test_predictions
 
 def pack_input_data_inplace(ts, cue, word_index):
 	seq_lens = []
@@ -244,7 +253,7 @@ def pack_input_data_inplace(ts, cue, word_index):
 		cue[j,:new_len] = new_cue
 	return seq_lens
 
-def test_dataset(model, dataset, loss_criterion):
+def test_dataset(model, dataset, loss_criterion, ind2word, should_stop=False):
 	model.eval()
 	# Unpack dev set data
 	test_A, test_ts, test_pos, test_word_index, test_cue, test_scope, test_emb = dataset
@@ -262,8 +271,16 @@ def test_dataset(model, dataset, loss_criterion):
 	elif MODEL in (TRNN, TLSTM):
 		test_output = model(test_ts, test_word_index, test_cue, test_A, test_pos, test_emb)
 	
+
 	# Count metrics
-	return assess_batch(test_output, test_scope, test_word_index, loss_criterion, seq_lens=seq_lens)
+	res = assess_batch(test_output, test_scope, test_word_index, loss_criterion, seq_lens=seq_lens)
+	loss, acc, prec, rec, f1, (tps, fps, fns), yhat = res
+	pt_actual = lambda c=BATCH_SIZE: print_batch(test_ts, ind2word, word_index=test_word_index, cue=test_cue, scope=yhat, cap=c)
+	pt_expected = lambda c=BATCH_SIZE: print_batch(test_ts, ind2word, word_index=test_word_index, cue=test_cue, scope=test_scope, cap=c)
+	# if should_stop:
+	# 	pdb.set_trace()
+	return res
+
 
 def assess_batch(model_output, y, word_index, loss_criterion, seq_lens=None):
 	assert model_output.shape[0] == y.shape[0]
@@ -271,6 +288,7 @@ def assess_batch(model_output, y, word_index, loss_criterion, seq_lens=None):
 
 	yhat = predict(model_output)
 	losses, accs, f1s = [], [], []
+	tps, fps, fns = 0, 0, 0
 
 	# class_wt = torch.tensor([0.1, 10.0]) # negated sentences to non-neg
 	class_wt = torch.tensor([0.65, 0.35])#[0.681,0.319]) # negated tokens to non-neg (given sentence has cue)
@@ -296,23 +314,28 @@ def assess_batch(model_output, y, word_index, loss_criterion, seq_lens=None):
 		# losses.append(loss_criterion(confidence_output[:,1], expected_output))
 
 		accs.append(accuracy(class_output, expected_output))
-		f1s.append(f1_score(class_output, expected_output))
+		(tp, fp, fn), *res = f1_score(class_output, expected_output)
+		tps += tp
+		fps += fp
+		fns += fn
+		f1s.append(res)
 
 	loss = sum(losses)/batch_len
-	acc = sum(accs)/batch_len
-	f1 = sum(f[0] for f in f1s)/batch_len
-	precision = sum(f[1] for f in f1s)/batch_len
-	recall = sum(f[2] for f in f1s)/batch_len
+	acc  = sum(accs)/batch_len
+	prec = sum(f[0] for f in f1s)/batch_len
+	rec  = sum(f[1] for f in f1s)/batch_len
+	f1   = sum(f[2] for f in f1s)/batch_len
 
-	return loss, acc, precision, recall, f1, yhat
+	return loss, acc, prec, rec, f1, (tps, fps, fns), yhat
 
 def print_results(loss, acc, precision, recall, f1, name, color=None):
+	avg_f1 = (2 * precision * recall) / (precision + recall + EPSILON)
 	print((color + ' >' if color else ' -') + ' {:>6}'.format(name), \
 		'l: {:.4f} '.format(loss), \
 		'a: {:.4f} '.format(acc), \
 		'p: {:.4f} '.format(precision), \
 		'r: {:.4f} '.format(recall), \
-		'f: {:.4f} '.format(f1) + (Color.ENDC if color else ''))
+		'f: {:.4f}/{:.4f} '.format(f1, avg_f1) + (Color.ENDC if color else ''))
 
 def print_progress(progress, info='', bar_len=20):
 	filled = int(progress*bar_len)
@@ -334,13 +357,14 @@ def f1_score(actual, expected):
     fp = torch.sum((1.0-expected) * actual, dim=-1)
     fn = torch.sum(expected * (1 - actual), dim=-1)
 
-    precision = tp / (tp + fp + EPSILON)
-    recall    = tp / (tp + fn + EPSILON)
+    p, r, f1 = calc_f1(tp, fp, fn)
+    return (tp, fp, fn), p, r, f1
 
-    F1 = 2 * precision * recall / (precision + recall + EPSILON)
-    F1[torch.isnan(F1)] = 0.
-    return F1.mean(), precision, recall
-
+def calc_f1(tp, fp, fn):
+	precision = tp / (tp + fp + EPSILON)
+	recall    = tp / (tp + fn + EPSILON)
+	f1 = (2 * precision * recall) / (precision + recall + EPSILON)
+	return precision, recall, f1
 
 class EmbeddingModel:
 	def __init__(self, model, tokenizer):
@@ -363,7 +387,7 @@ def main():
 	pretrained_embs = True
 
 	# Retrieve data
-	corpora, word2ind, syn2ind, full_vocab = get_parse_data(
+	corpora, corp_sent_copies, word2ind, syn2ind, full_vocab = get_parse_data(
 		only_negations=True, 
 		external_syntax_folder=syntax_folder,
 		derive_pos_from_syntax=pos_from_syntax,
@@ -395,6 +419,7 @@ def main():
 		embs_folder='pretrained_embs')
 		# pretrained_embs_model=pre_embs)
 	
+	# pdb.set_trace()
 
 	# for c in corpora:
 	# 	lengths = [t.longest_syntactic_path() for t in c]
@@ -431,9 +456,10 @@ def main():
 
 	# pdb.set_trace()
 	# Train and Test model
-	run_model(model, train, dev, test, ind2word, ind2syn)
+	test_predictions = run_model(model, train, dev, test, ind2word, ind2syn)
 
-
+	write_starsem_scope_data('cardboard', 'circle', test_predictions, test)#, corp_sent_copies[2])
+	print('Output written to file.')
 
 if __name__ == '__main__':
 	main()
