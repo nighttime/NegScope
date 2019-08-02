@@ -19,7 +19,7 @@ RNN   = 1
 TRNN  = 2
 TLSTM = 3
 
-MODEL = RNN
+MODEL = TRNN
 
 
 if MODEL == RNN:
@@ -66,7 +66,7 @@ def build_recurrent_model(vocab_size, pos_size, pretrained_embs):
 
 def build_tree_recurrent_model(vocab_size, syntax_size, pretrained_embs):
 	print(Color.BOLD + 'TRNN MODEL' + Color.ENDC)
-	model = TreeRecurrentTagger(HIDDEN_UNITS, NUM_CLASSES, vocab_size, syntax_size, pretrained_embs, dropout_p=DROPOUT_P)
+	model = TreeRecurrentTagger(HIDDEN_UNITS, NUM_CLASSES, vocab_size, syntax_size, pretrained_embs, dropout=False)
 	return model
 
 def build_tree_lstm_model(vocab_size, syntax_size, pretrained_embs):
@@ -125,6 +125,7 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 	f1_loss = F1_Loss()
 
 	hist = {'train': [], 'dev': [], 'test': []}
+	hist_preds = {'train': [], 'test': []}
 	train_improvement_counter = 0
 	test_improvement_counter = 0
 
@@ -209,7 +210,12 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 
 			# Test set testing
 			*test_results, counts, test_predictions = test_dataset(model, test, f1_loss, ind2word, should_stop=(epoch>2))
-			hist['test'].append(test_results)
+			hollistic_test_results = test_results[:2] + list(calc_f1(*counts))
+			# hist['test'].append(test_results)
+			hist['test'].append(hollistic_test_results)
+			# pdb.set_trace()
+			hist_preds['test'].append(test_predictions)
+
 			print_results(*test_results, 'test', Color.OKGREEN)
 			print_results(*test_results[:2], *calc_f1(*counts), 'test', Color.OKGREEN)
 			print('tp: {}\tfp: {}\tfn: {}'.format(*[c.item() for c in counts]))
@@ -224,7 +230,7 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 
 		scheduler.step(dev_results[0])
 
-		if epoch > 0 and test_results[-1] <= hist['test'][-2][-1]:
+		if epoch > 100 and test_results[-1] <= hist['test'][-2][-1]:
 			test_improvement_counter += 1
 		else:
 			test_improvement_counter = 0
@@ -236,9 +242,10 @@ def run_model(model, train, dev, test, ind2word, ind2syn):
 	print(Color.BOLD + '=== FINISHED ===' + Color.ENDC)
 	max_f1 = max(hist['test'], key=lambda x: x[-1])
 	max_index = hist['test'].index(max_f1)
+	best_predictions = hist_preds['test'][max_index]
 	print('Best f1 score at epoch {}'.format(max_index))
 	print_results(*max_f1, 'best', color=Color.WARNING)
-	return test_predictions
+	return best_predictions
 
 def pack_input_data_inplace(ts, cue, word_index):
 	seq_lens = []

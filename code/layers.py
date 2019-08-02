@@ -450,13 +450,14 @@ def dropout_mask(size, p):
 
 
 class TreeRecurrentTagger(Module):
-    def __init__(self, hidden_size, num_classes, vocab_size, syntax_size, use_pretrained_embs=False, dropout_p=0):
+    def __init__(self, hidden_size, num_classes, vocab_size, syntax_size, use_pretrained_embs=False, dropout=True):
         super(TreeRecurrentTagger, self).__init__()
         self.hidden_size = hidden_size
         self.num_classes = num_classes
         self.num_syntax_labels = syntax_size
         self.hidden_syn_size = 50
         self.use_pretrained_embs = use_pretrained_embs
+        self.dropout = dropout
 
         if not self.use_pretrained_embs:
             self.word_embedding = nn.Embedding(vocab_size, self.hidden_size)
@@ -520,14 +521,14 @@ class TreeRecurrentTagger(Module):
             cue_emb = make_one_hot(c, self.num_classes)
             # pos_emb  = make_one_hot(p, self.num_syntax_labels)
             pos_emb = self.syn_embedding(p)
-            if self.training:
+            if self.training and self.dropout:
                 word_emb = word_emb.clone() * self.word_drop_mask
                 pos_emb = pos_emb.clone() * self.syn_drop_mask
 
             in_emb  = torch.cat((word_emb, cue_emb, pos_emb), -1)
             x_emb = self.leaf2node(in_emb)
 
-            if self.training:
+            if self.training and self.dropout:
                 x_emb = x_emb.clone() * self.leaf_drop_mask
 
             A = adj[i,1]
@@ -538,12 +539,12 @@ class TreeRecurrentTagger(Module):
             upward_results = torch.zeros(sentlen, self.hidden_size)
             upward_results[w_idx] = x_emb
             global_up_emb = self.rec_traverse_up(tree_tokens, w_idx, A, 0, upward_results)
-            if self.training:
+            if self.training and self.dropout:
                 global_up_emb = global_up_emb.clone() * self.rev_drop_mask
 
             # root_constituent = make_one_hot(tree_tokens[0], self.num_syntax_labels)
             root_constituent = self.syn_embedding(tree_tokens[0])
-            if self.training:
+            if self.training and self.dropout:
                 root_constituent = root_constituent.clone() * self.syn_drop_mask
             root_up_emb = torch.cat((global_up_emb, root_constituent), dim=-1)
             global_down_emb = torch.tanh(self.global_reverse(root_up_emb))
@@ -554,7 +555,7 @@ class TreeRecurrentTagger(Module):
 
             # concatenate the upward and downward results before classification
             tree_data = torch.cat((downward_results, upward_results), dim=-1)
-            if self.training:
+            if self.training and self.dropout:
                 tree_data = tree_data.clone() * self.tree_drop_mask
             classifications = self.classifier(tree_data)
             class_scores = torch.tanh(classifications)
@@ -579,7 +580,7 @@ class TreeRecurrentTagger(Module):
         left  = get_child(children_idx[0])
         right = get_child(children_idx[1])
 
-        if self.training:
+        if self.training and self.dropout:
             left = left.clone() * self.up_drop_mask
             right = right.clone() * self.up_drop_mask
 
@@ -611,7 +612,7 @@ class TreeRecurrentTagger(Module):
         cons_left  = get_child_syntax(l_idx)
         cons_right = get_child_syntax(r_idx)
 
-        if self.training:
+        if self.training and self.dropout:
             cons_left  = cons_left.clone()  * self.syn_drop_mask
             cons_right = cons_right.clone() * self.syn_drop_mask
 
@@ -619,7 +620,7 @@ class TreeRecurrentTagger(Module):
         # constituent = self.syn_embedding(tree_tokens[parent_idx])
 
         parent_context = torch.cat((parent_emb, upward_table[parent_idx]), dim=-1)
-        if self.training:
+        if self.training and self.dropout:
             parent_context = parent_context.clone() * self.down_drop_mask
         downward_context = torch.cat((cons_left, cons_right, parent_context), dim=-1)
         children_emb = torch.tanh(self.decompose(downward_context))

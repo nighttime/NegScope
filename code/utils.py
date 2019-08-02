@@ -74,6 +74,17 @@ def viz_register_hooks(var):
 
     return make_dot
 
+if __name__ == '__main__':
+    tp1, fp1, fn1 = 821, 49, 139 #844, 71, 116
+    tp2, fp2, fn2 = 684, 72, 161 #718, 115, 127
+    tp = float(tp1+tp2)
+    fp = float(fp1+fp2)
+    fn = float(fn1+fn2)
+    p = tp / (tp + fp)
+    r = tp / (tp + fn)
+    f1 = (2*p*r)/(p+r)
+    print('f1: {:.4f}  p: {:.4f}  r: {:.4f}'.format(f1, p, r))
+
 # get_dot = register_hooks(z)
 # z.backward()
 # dot = get_dot()
