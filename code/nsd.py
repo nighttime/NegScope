@@ -6,6 +6,7 @@ from utils import *
 import pdb
 import time
 import argparse
+from datetime import datetime
 
 import torch
 import torch.nn.functional as F
@@ -14,10 +15,10 @@ import torch.optim as optim
 from pytorch_transformers import *
 
 
-GCN   = 0
-RNN   = 1
-TRNN  = 2
-TLSTM = 3
+GCN   = 'GCN'
+RNN   = 'RNN'
+TRNN  = 'TRNN'
+TLSTM = 'TLSTM'
 
 MODEL = TRNN
 
@@ -42,7 +43,7 @@ elif MODEL in (GCN, TRNN, TLSTM):
 	GCN_LAYERS = 12
 	NUM_CLASSES = 2
 
-	EPOCHS = 130
+	EPOCHS = 3
 	LR = 0.001 #0.001 is good!
 	BATCH_SIZE = 30
 
@@ -66,7 +67,7 @@ def build_recurrent_model(vocab_size, pos_size, pretrained_embs):
 
 def build_tree_recurrent_model(vocab_size, syntax_size, pretrained_embs):
 	print(Color.BOLD + 'TRNN MODEL' + Color.ENDC)
-	model = TreeRecurrentTagger(HIDDEN_UNITS, NUM_CLASSES, vocab_size, syntax_size, pretrained_embs, dropout=False)
+	model = TreeRecurrentTagger(HIDDEN_UNITS, NUM_CLASSES, vocab_size, syntax_size, pretrained_embs, dropout=True)
 	return model
 
 def build_tree_lstm_model(vocab_size, syntax_size, pretrained_embs):
@@ -461,12 +462,19 @@ def main():
 
 	print(Color.BOLD + 'PRETRAINED EMBS: ' + str(pretrained_embs) + Color.ENDC)
 
-	# pdb.set_trace()
 	# Train and Test model
-	test_predictions = run_model(model, train, dev, test, ind2word, ind2syn)
+	preds = run_model(model, train, dev, test, ind2word, ind2syn)
+	A, ts, pos, word_index, cue, scope, embs = test
 
-	write_starsem_scope_data('cardboard', 'circle', test_predictions, test)#, corp_sent_copies[2])
-	print('Output written to file.')
+	# pdb.set_trace()
+	# exit()
+
+	colorings_fname = datetime.now().strftime('%a_%b_%d_%Y_%X') + '--' + MODEL + '(test@' + str(EPOCHS) + 'eps)'
+	colorings_path = 'preds/' + colorings_fname
+	np.save(colorings_path, preds.data.numpy())
+	print('full model output written to:', colorings_path)
+	write_starsem_scope_data('cardboard', 'circle', preds, test)#, corp_sent_copies[2])
+	print('*SEM output written to: cardboard, circle')
 
 if __name__ == '__main__':
 	main()

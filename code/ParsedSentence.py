@@ -73,6 +73,21 @@ class ParsedSentence:
 				s += ')'
 				return s
 
+		def print_qtree(self, words, color_idx, colorings):
+			begin = '\\inscope{' if colorings[color_idx] else '{'
+			end = '}'
+			if self.is_leaf():
+				leaf = begin + words[self.leaf_ref] + end + ' '
+				return leaf, color_idx
+			else:
+				const_print = self.constituent.replace('<', '(').replace('>', ')').replace('\\', '\\textbackslash ')
+				node = '[.' + begin + const_print + end + ' '
+				for child in self.children:
+					subtree, color_idx = child.print_qtree(words, color_idx+1, colorings)
+					node += subtree
+				node += ' ]'
+				return node, color_idx
+
 
 	def __init__(self, words, pos, syntax, negation=None):
 		self.words = [w.lower() for w in words]
@@ -93,6 +108,11 @@ class ParsedSentence:
 
 	def pprint(self):
 		print(self.root.pprint())
+
+	def print_qtree(self, colorings):
+		tree, node_ct = self.root.print_qtree(self.words, 0, colorings)
+		assert node_ct == len(self.constituents) - 1
+		print('\\Tree' + tree)
 
 	def longest_syntactic_path(self):
 		# Find shortest path from each constituent to each leaf node
