@@ -13,6 +13,7 @@ class ParsedSentence:
 			self.children = []
 			self.negation_cue = False
 			self.negation_scope = False
+			self.traversal_idx = None
 
 		def add_constituent(self, constituent):
 			self.constituent = constituent
@@ -41,6 +42,12 @@ class ParsedSentence:
 				return [self.constituent]
 			else:
 				return [c for child in self.children for c in child._extract_pos_from_syntax()]
+
+		def calc_max_depth(self):
+			if self.is_leaf():
+				return 0
+			else:
+				return max(1 + c.calc_max_depth() for c in self.children)
 
 		def __str__(self):
 			if self.is_leaf():
@@ -73,17 +80,28 @@ class ParsedSentence:
 				s += ')'
 				return s
 
-		def print_qtree(self, words, color_idx, colorings):
-			begin = '\\inscope{' if colorings[color_idx] else '{'
-			end = '}'
+		def print_qtree(self, words, color_idx, true_scope, cue, colorings=None, pos=None):
+			begin, end = '{', '}'
+			if colorings is not None and colorings[color_idx]:
+				begin = begin + '\\inscope{'
+				end = '}' + end
 			if self.is_leaf():
+				if pos:
+					const_print = pos[self.leaf_ref].replace('<', '(').replace('>', ')').replace('\\', '\\textbackslash ')
+					begin = '[.{' + const_print + '} ' + begin
+					end = end + ' ] '
+				if cue[self.leaf_ref]:
+					end = '*' + end
+				if true_scope[self.leaf_ref]:
+					begin = begin + '\\myuline{'
+					end = '}' + end
 				leaf = begin + words[self.leaf_ref] + end + ' '
 				return leaf, color_idx
 			else:
 				const_print = self.constituent.replace('<', '(').replace('>', ')').replace('\\', '\\textbackslash ')
 				node = '[.' + begin + const_print + end + ' '
 				for child in self.children:
-					subtree, color_idx = child.print_qtree(words, color_idx+1, colorings)
+					subtree, color_idx = child.print_qtree(words, color_idx+1, true_scope, cue, colorings=colorings, pos=pos)
 					node += subtree
 				node += ' ]'
 				return node, color_idx
@@ -109,10 +127,18 @@ class ParsedSentence:
 	def pprint(self):
 		print(self.root.pprint())
 
-	def print_qtree(self, colorings):
-		tree, node_ct = self.root.print_qtree(self.words, 0, colorings)
+	def print_qtree(self, true_scope, cue, colorings=None, pos_branches=False, fig=False):
+		tree, node_ct = self.root.print_qtree(self.words, 0, true_scope, cue, colorings=colorings, pos=(self.pos if pos_branches else None))
 		assert node_ct == len(self.constituents) - 1
-		print('\\Tree' + tree)
+		begin = '\\begin{figure}[h]\n\\begin{tikzpicture}[scale=0.6]\n'
+		end = '\n\\end{tikzpicture}\n\\end{figure}'
+		tree = '\\Tree' + tree
+		if fig:
+			tree = begin + tree + end
+		return tree
+
+	def max_tree_depth(self):
+		return self.root.calc_max_depth()
 
 	def longest_syntactic_path(self):
 		# Find shortest path from each constituent to each leaf node
@@ -326,10 +352,12 @@ class ParsedSentence:
 		return tokens
 
 	@classmethod
-	def _collect_constituents(cls, node, constituents_list):
+	def _collect_constituents(cls, node, constituents_list, traversal_idx=0):
+		node.traversal_idx = traversal_idx
 		constituents_list.append(node)
 		for child in node.children:
-			ParsedSentence._collect_constituents(child, constituents_list)
+			traversal_idx = ParsedSentence._collect_constituents(child, constituents_list, traversal_idx=traversal_idx+1)
+		return traversal_idx
 
 
 def main():

@@ -460,10 +460,11 @@ class TreeRecurrentTagger(Module):
         self.dropout = dropout
 
         if not self.use_pretrained_embs:
-            self.word_embedding = nn.Embedding(vocab_size, self.hidden_size)
+            # self.word_embedding = nn.Embedding(vocab_size, self.hidden_size)
             self.leaf2node = nn.Linear(self.hidden_size + self.hidden_syn_size + self.num_classes, self.hidden_size)
         else:
             self.leaf2node = nn.Linear(768 + self.hidden_syn_size + self.num_classes, self.hidden_size)
+        self.leaf2node = nn.Linear(self.hidden_syn_size + self.num_classes, self.hidden_size)
                 
         self.syn_embedding = nn.Embedding(self.num_syntax_labels, self.hidden_syn_size)
         
@@ -525,7 +526,8 @@ class TreeRecurrentTagger(Module):
                 word_emb = word_emb.clone() * self.word_drop_mask
                 pos_emb = pos_emb.clone() * self.syn_drop_mask
 
-            in_emb  = torch.cat((word_emb, cue_emb, pos_emb), -1)
+            # in_emb  = torch.cat((word_emb, cue_emb, pos_emb), -1)
+            in_emb  = torch.cat((cue_emb, pos_emb), -1)
             x_emb = self.leaf2node(in_emb)
 
             if self.training and self.dropout:

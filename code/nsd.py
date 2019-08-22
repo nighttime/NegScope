@@ -43,7 +43,7 @@ elif MODEL in (GCN, TRNN, TLSTM):
 	GCN_LAYERS = 12
 	NUM_CLASSES = 2
 
-	EPOCHS = 3
+	EPOCHS = 150
 	LR = 0.001 #0.001 is good!
 	BATCH_SIZE = 30
 
@@ -387,11 +387,11 @@ def main():
 	# if args.syntax and args.syntax[-1] != '/':
 	# 	args.syntax += '/'
 
-	syntax_folder = '../starsem-st-2012-data/cd-sco-CCG/corpus/'
+	syntax_folder = None#'../starsem-st-2012-data/cd-sco-CCG/corpus/'
 	directional = True
 	row_normalize = False
-	pos_from_syntax=True
-	condense_trees = True
+	pos_from_syntax=False
+	condense_trees = False
 	pretrained_embs = True
 
 	# Retrieve data
@@ -427,7 +427,7 @@ def main():
 		embs_folder='pretrained_embs')
 		# pretrained_embs_model=pre_embs)
 	
-	# pdb.set_trace()
+	pdb.set_trace()
 
 	# for c in corpora:
 	# 	lengths = [t.longest_syntactic_path() for t in c]
@@ -469,7 +469,7 @@ def main():
 	# pdb.set_trace()
 	# exit()
 
-	colorings_fname = datetime.now().strftime('%a_%b_%d_%Y_%X') + '--' + MODEL + '(test@' + str(EPOCHS) + 'eps)'
+	colorings_fname = datetime.now().strftime('%a_%b_%d_%Y_%X') + '--' + MODEL + '(syntax_only_test@' + str(EPOCHS) + 'eps)'
 	colorings_path = 'preds/' + colorings_fname
 	np.save(colorings_path, preds.data.numpy())
 	print('full model output written to:', colorings_path)

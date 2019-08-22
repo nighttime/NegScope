@@ -1,10 +1,14 @@
 from data import *
+from nsd import *
 from graphviz import Digraph
 import torch
 from torch.autograd import Variable, Function
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 import pdb
 import sys
+from collections import Counter
 
 class Color:
     HEADER = '\033[95m'
@@ -82,9 +86,9 @@ def viz_register_hooks(var):
 # dot = get_dot()
 # dot.save('tmp.dot')
 
-def compute_f1():
-    tp1, fp1, fn1 = 960, 1741, 0 #821, 49, 139
-    tp2, fp2, fn2 = 845, 1302, 0 #684, 72, 161
+def print_f1():
+    tp1, fp1, fn1 = 833, 78, 127 #821, 49, 139
+    tp2, fp2, fn2 = 712, 74, 133 #684, 72, 161
     tp = float(tp1+tp2)
     fp = float(fp1+fp2)
     fn = float(fn1+fn2)
@@ -92,6 +96,26 @@ def compute_f1():
     r = tp / (tp + fn)
     f1 = (2*p*r)/(p+r)
     print('p: {:.4f}  r: {:.4f}  f1: {:.4f}'.format(p, r, f1))
+
+
+def np_acc(actual, expected):
+    return (actual == expected).mean()
+
+def np_f1_score(actual, expected):
+    # pdb.set_trace()
+    tp = np.sum(expected * actual, axis=-1)
+    tn = np.sum((1.0-expected) * (1.0-actual), axis=-1)
+    fp = np.sum((1.0-expected) * actual, axis=-1)
+    fn = np.sum(expected * (1 - actual), axis=-1)
+
+    p, r, f1 = np_calc_f1(tp, fp, fn)
+    return p, r, f1
+
+def np_calc_f1(tp, fp, fn):
+    precision = tp / (tp + fp + EPSILON)
+    recall    = tp / (tp + fn + EPSILON)
+    f1 = (2 * precision * recall) / (precision + recall + EPSILON)
+    return precision, recall, f1
 
 def examine_results():
     syntax_folder = '../starsem-st-2012-data/cd-sco-CCG/corpus/'
@@ -108,7 +132,7 @@ def examine_results():
         derive_pos_from_syntax=pos_from_syntax,
         condense_single_branches=condense_trees)
 
-    _, _, test = format_data(
+    train, dev, test = format_data(
         corpora, 
         word2ind, 
         syn2ind, 
@@ -116,14 +140,98 @@ def examine_results():
         row_normalize=row_normalize, 
         embs_folder='pretrained_embs')
 
+    dev_scope = dev[5]
+
+    trees = corpora[2]
     A, ts, pos, word_index, cue, scope, embs = test
 
     colorings = np.load(sys.argv[1])
+
+    def qt(n):
+        #true_scope, cue, colorings=None, pos_branches=False, fig=False):
+        return trees[n].print_qtree(scope[n], cue[n][word_index[n]], colorings=colorings[n], fig=True)
+
+    def pqt(n):
+        print(qt(n))
+
+    results = [(np_acc(colorings[i][word_index[i]], scope[i]), *np_f1_score(colorings[i][word_index[i]], scope[i]), len(t.constituents), t, i) for i,t in enumerate(trees)]
+    # results = [(f, l, i) for a, p, r, f, l, t, i in results]
+    sorted_res = sorted(results, key=lambda x: x[0], reverse=True)
+
+    res_idx = [(a, f, l, i) for a, p, r, f, l, t, i in sorted_res]
+
+    sorted_accs = [j[0]*100 for j in sorted_res]
+
+    poor_res = [j for j in sorted_res if j[0] <= 0.67]
+    poor_exs = [qt(j[-1]) + '\n%num={}'.format(j[-1]) + '\n\n' for j in poor_res]
+    # for ex in poor_exs:
+    #     print(ex)
+
+    good_exs = [qt(j[-1]) + '\n%num={}'.format(j[-1]) + '\n\n' for j in sorted_res if j[0] > 0.99]
+    best_exs = [j for j in sorted_res if j[0] == 1]
+    # for ex in good_exs:
+        # print(ex)
+
+    # scope_means = [np.mean(dev_scope[n]) for n in range(len(dev_scope))]
+    # smm = np.mean(scope_means)
+
+    accs = [a for a, p, r, f, l, t, i in results]
+    cons = [l for a, p, r, f, l, t, i in results]
+    tree_depths = [t.max_tree_depth() for a, p, r, f, l, t, i in results]
+    sent_lens = [len(t.words) for a, p, r, f, l, t, i in results]
+    complexity_ratios = [tree_depths[i]/sent_lens[i] for i in range(len(tree_depths))]
+
+    def get_phrase(const, t):
+        if const.is_leaf():
+            return t.words[const.leaf_ref]
+        else:
+            return ' '.join(get_phrase(c, t) for c in const.children)
+
+    ct_neg_children = 0
+    ct_neg_parent = 0
+    ct_pos_parent = 0
+    blocked_ctr = Counter()
+    vp_mod = []
+    np_mod = []
+    clause = []
+    for a, p, r, f, l, t, i in results:
+        if a > 0:
+            for const in t.constituents:
+                if not const.is_leaf():
+                    if not colorings[i][const.traversal_idx]:
+                        continue
+                    if sum(colorings[i][c.traversal_idx] for c in const.children) != 1:
+                        continue
+                    child = [c for c in const.children if not colorings[i][c.traversal_idx]][0]
+                    key = t.words[child.leaf_ref] if child.is_leaf() else child.constituent
+                    blocked_ctr[key] += 1
+                    if key == '<S\\NP>\\<S\\NP>':
+                        vp_mod.append(get_phrase(child, t))
+                    elif key == 'NP\\NP':
+                        np_mod.append(get_phrase(child, t))
+                    elif key == 'S[dcl]\\NP':
+                        clause.append(get_phrase(child, t))
+
+    
+
+    # bin_width = 5
+    # ax = sns.distplot(all_accs, kde=False, bins=range(0,101,bin_width))
+    # plt.xticks(range(0,101,10))
+    # plt.axvline(x=67, color='k', linestyle='--', linewidth=1)
+    # ax.set_ylabel('Number of Sentences')
+    # ax.set_xlabel('Prediction Accuracy')
+    # ax.set_title('Histogram of Token Prediction Accuracy per Sentence')
+    # plt.legend(['Random Prediction Baseline'])
+
+    # plt.show()
+
+    
+
     pdb.set_trace()
 
 
 def main():
-    # compute_f1()
+    # print_f1()
     examine_results()
 
 
